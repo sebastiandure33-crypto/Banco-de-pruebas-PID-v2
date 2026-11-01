@@ -1,0 +1,18 @@
+P1_pedestal.stl              watertight=True  vol=26.39 cm3  bbox=[123.9, 64.0, 8.0]
+P2_pista.stl                 watertight=True  vol=57.10 cm3  bbox=[130.3, 190.4, 6.0]
+P3_sector_linea.stl          watertight=True  vol=12.47 cm3  bbox=[59.5, 101.8, 2.9]
+P4_pinon.stl                 watertight=True  vol=6.02 cm3  bbox=[42.4, 42.4, 5.1]
+P5_soporte_perturbador.stl   watertight=True  vol=12.15 cm3  bbox=[40.0, 63.0, 12.4]
+Engranaje: módulo 1.25, cremallera 236 (R=147.5), piñón 32 (R=20.0), relación 7.375:1 -> 1° de servo = 0.136° de línea; 180° = 24.4°
+Superficie de la línea z=6.0; servo perturbador: tapa z=10.15, orejas z=18.45, fondo z=36.85
+   base∩pedestal                              -0.0
+   pedestal∩pista                             0.0
+   servo2∩soporte                             0.0
+   servo2∩pista                               0.0
+   horn2∩piñón                                0.0
+   piñón∩soporte/pista                        0.0
+   soporte∩pista                              0.0
+   sector(±12,5°)∩pista/pedestal/soporte      0.0
+   sector∩piñón engranando (mm³)              0.0
+   brazo(±30°)∩plataforma/servo2              0.0
+   boca de la cabina LDR -> superficie del sector (mm) 7.1

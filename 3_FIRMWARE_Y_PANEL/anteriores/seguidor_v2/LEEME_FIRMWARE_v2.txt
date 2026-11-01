@@ -1,0 +1,133 @@
+SEGUIDOR DE LÍNEA v2 - FIRMWARE Y PANEL
+=======================================
+
+ARCHIVOS
+--------
+seguidor_v2/seguidor_v2.ino   Programa para el Arduino Nano (abrir con el IDE de Arduino).
+panel_v2.html                 Panel de control: abrir con Chrome o Edge en la computadora.
+                              Botón "Demo": reproduce una simulación completa sin placa.
+seguidor_v2.hex               El mismo programa ya compilado (opcional, para cargar con XLoader/avrdude).
+pruebas_simulacion/           Simulación con la que se probó el firmware y sus resultados.
+
+
+1. CONEXIONES
+-------------
+  LDR izquierdo ... 5V -- LDR -- A0 -- R -- GND
+  LDR derecho ..... 5V -- LDR -- A1 -- R -- GND
+  Servo ........... señal en D9; alimentación aparte con masa común (como ya lo tenés)
+  LED izquierdo ... D5 -- resistencia 220 a 330 Ω -- LED -- GND
+  LED derecho ..... D6 -- resistencia 220 a 330 Ω -- LED -- GND
+
+  * Los LED pasan a pines PWM para poder regular el brillo de cada uno (ledi / ledd).
+    No usar D9 ni D10 para los LED: la librería Servo les quita el PWM.
+  * Cada LED con su propia resistencia. LED verde o blanco: el LDR es más sensible al verde.
+  * Resistencia R de cada LDR: con el cabezal armado y el LED encendido, medir con el
+    multímetro el LDR sobre blanco y sobre la cinta negra, y usar el valor comercial más
+    cercano a raíz(R_blanco x R_negro). Puede ser distinta en cada lado. Probablemente
+    quede entre 4,7k y 10k.
+  * Línea: cinta aisladora negra de 19 mm (los LDR están a 20 mm entre centros).
+
+
+2. CARGAR EL PROGRAMA
+---------------------
+  IDE de Arduino -> abrir seguidor_v2/seguidor_v2.ino
+  Herramientas -> Placa: "Arduino Nano"
+                 Procesador: "ATmega328P (Old Bootloader)"  <- casi todos los Nano baratos
+                 (si da error de subida, probar "ATmega328P")
+  Si la PC no reconoce la placa: instalar el driver CH340.
+  No hace falta instalar librerías (Servo y EEPROM vienen con el IDE).
+  Memoria: usa ~59 % del programa y 33 % de la RAM.
+
+
+3. PUESTA EN MARCHA (en este orden)
+-----------------------------------
+  a) Abrir panel_v2.html en Chrome/Edge -> "Conectar placa" -> elegir el puerto.
+     Al conectar la placa se reinicia (es normal); el panel lee todos los parámetros
+     de la placa, así que lo que ves es lo que tiene cargado.
+  b) Montar el brazo con el servo en 90°. Con "Ir a 90" comprobar que quede derecho;
+     si quedó corrido por el salto del estriado, corregir con "trim" (grados).
+  c) Mirar "Lectura cruda del ADC": sobre blanco conviene 600-900 y sobre negro
+     bastante menos. Si un lado está muy bajo, subir su resistencia o su LED.
+  d) Poner la cinta quieta bajo el brazo, con blanco a ambos lados -> "Calibrar".
+     El brazo barre el recorrido tres veces (~25 s). Resultado esperado:
+       - contraste de cada lado de 2x o más (la simulación dio ~4,9x)
+       - retardo medido de pocos grados
+       - las dos curvas del gráfico cruzan el cero casi en el mismo punto
+     Si falla, el mensaje dice por qué (contraste, centro no encontrado, etc.).
+  e) "Guardar en la placa". Mientras no guardes, el panel muestra "Cambios sin guardar"
+     y al reiniciar la placa se vuelve a lo guardado.
+  f) "Seguir". Mover la cinta y mirar el gráfico de error.
+
+
+4. AJUSTE (si hace falta)
+-------------------------
+  Síntoma                                         Qué tocar
+  Oscila / zumba alrededor de la línea .......... bajar ki (ej. 6 -> 4) o subir zm (0,2 -> 0,4)
+  Oscila lento con sobrepaso grande ............. bajar kp (0,4 -> 0,25)
+  Se atrasa mucho con la línea en movimiento .... subir ki de a 1 (atraso ≈ velocidad / ki)
+  Pierde la línea cuando se mueve rápido ........ subir ksat (3 -> 5) o vmax
+  Mucho ruido en las negruras ................... subir tau (40 -> 60 ms); más tau = más retardo
+  Un lado ve mucho menos luz .................... subir su LED (ledi/ledd) o cambiar su R
+  Tarda en reencontrar la línea ................. subir vbusq o bajar thold
+
+  Valores por defecto: kp 0,4 · ki 6 · ksat 3 · zm 0,2 · tau 40 ms · vmax 150 °/s.
+  En la simulación se mantuvieron estables aun con un sistema 3 veces más lento de lo
+  previsto; con kp 0,5 y ki 8 sigue mejor pero oscila si el sistema real es lento.
+
+
+5. CÓMO FUNCIONA (resumen)
+--------------------------
+  * Cada lectura se convierte en conductancia del LDR y se normaliza entre el negro y el
+    blanco de ESE sensor: dos LDR que miden el doble uno del otro quedan comparables sin
+    "factor de balance".
+  * s = (negroDer - negroIzq) / (negroDer + negroIzq), de -1 a 1; 0 = línea centrada.
+  * La calibración mide cuánto cambia s por grado; el error queda en grados reales.
+  * Control PI posicional con UNA sola integración (el código viejo integraba dos veces,
+    y eso fabricaba el bucle). Lazo fijo de 20 ms, nada bloquea.
+  * Línea perdida: se queda quieto "thold" ms y después busca hacia el último lado donde
+    la vio. No inventa el error con la posición del servo.
+  * Sin compensación de backlash por software y sin soltar el servo (detach): eran las
+    otras causas del desfase.
+  * Se detecta un LDR desconectado o en corto (estado FALLA).
+  * La configuración se guarda con verificación (CRC): una EEPROM corrupta no se carga.
+  * Al arrancar informa la causa del reinicio (encendido, botón/puerto, caída de tensión).
+    Si alguna vez aparece "caida de tension", el problema es de alimentación.
+  * Watchdog desactivado a propósito: con el bootloader viejo de los Nano baratos puede
+    dejar la placa reiniciándose en bucle. Se activa con USAR_WATCHDOG 1 solo con Optiboot.
+
+
+6. ÓRDENES (también se pueden escribir en el Monitor Serie, 115200, con "Nueva línea")
+--------------------------------------------------------------------------------------
+  get                 todos los parámetros y la calibración
+  set <nombre> <val>  cambiar un parámetro (responde con el valor aplicado o el error)
+  run / stop          seguir / detener
+  cal                 calibrar
+  goto <grados>       mover el brazo
+  esc <grados>        ensayo de escalón: salto brusco y registro de 2 s a 50 Hz
+  save / load         guardar / recargar lo guardado
+  defaults            valores de fábrica
+  tel 1 / tel 0       telemetría continua
+  status              estado
+
+  Parámetros: kp ki ksat zm vmax vbusq vcal thold amin amax trim tau vison visoff ledi ledd teldiv
+
+
+7. QUÉ SE PROBÓ ANTES DE ENTREGARLO
+-----------------------------------
+  Compilado para ATmega328P con el núcleo oficial de Arduino: sin errores ni advertencias.
+  Probado en una simulación física (pruebas_simulacion/), con: servo con zona muerta, latencia
+  y juego de 0,8°; brazo de 120 mm; dos LDR lentos y distintos (10k y 20k, divisores de 4,7k y
+  10k, LED con brillo distinto); ruido del ADC; puerto serie a 115200 con buffer de 64 bytes.
+  16 chequeos, todos aprobados con el sistema a velocidad normal, 2x y 3x más lento:
+
+    Calibración ................ centro a 0,01° del real
+    Línea quieta ............... error medio 0,02-0,15°, sin oscilación
+    Línea en movimiento ........ 10 mm/s: error RMS 0,9° · 25 mm/s: 1,3° · 45 mm/s: 2,6° (sin perderla)
+    Línea perdida (salto 45 mm)  la reencuentra en ~1,6 s
+    Ráfaga de órdenes .......... ninguna letra perdida; inválidas rechazadas con mensaje
+    11 cambios en vivo + stop/goto/run ... vuelve a centrar sin reiniciar la placa
+    EEPROM ..................... guarda/recarga; detecta datos corruptos
+    LDR desconectado ........... pasa a FALLA y detiene el control
+
+  Es una simulación: tu servo, tus LDR y tu iluminación reales van a ser distintos. Por
+  eso los valores se leen siempre de la placa y se pueden ajustar en vivo desde el panel.

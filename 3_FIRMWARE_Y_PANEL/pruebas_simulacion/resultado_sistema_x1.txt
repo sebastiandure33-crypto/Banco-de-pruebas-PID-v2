@@ -1,53 +1,75 @@
 == ARRANQUE ==
-  [  0.302] BOOT,seguidor,2.0,desconocida,config de fabrica
-  [  0.302] I,ordenes: get | set <nom> <val> | run | stop | cal | goto <g> | esc <g>
-  [  0.302] I,         save | load | defaults | tel 1|0 | status
-  [  0.302] ST,REPOSO,0,0,0,90.00,0
+  [  0.302] BOOT,banco_pid,3.0,desconocida,config de fabrica
+  [  0.302] I,get set run stop cal calp goto lin lcero ens save load defaults tel status
+  [  0.302] ST,REPOSO,0,0,0,90.00,0,0.00,0
   OK   mensaje de arranque
-  RAW sobre blanco/negro (muy distintos a proposito): rawI=598 rawD=622
-== CALIBRACION ==
-  C,OK,linea=90.51,pendiente=0.7654,retardo_grados=0.89,contrasteI=4.93,contrasteD=4.78
-  [debug] gI 0.4882..2.4074  gD 0.3977..1.9015
+  crudo sobre blanco: izq=768 der=299 (izquierdo casi saturado, a proposito)
+== CALIBRACION DEL BRAZO (cal) ==
+  C,DIAG,5.05,4.78,788,483,84.2,94.4,10.2
+  C,OK,89.01,0.7466,0.90
   OK   calibracion exitosa
-  linea real en 90.50°, calibracion dice 90.51°
+  OK   desfase entre LDR medido (~9,5°)
+  linea real en 89.00°, calibracion dice 89.01°
   OK   centro calibrado a menos de 1° del real
-== SEGUIMIENTO, LINEA QUIETA ==
-  error medio 0.02°, max 0.02°, oscilacion pico a pico 0.00° (comando 0.00°)
-  OK   centrado (error medio < 0,6°)
-  OK   sin bucle (oscilacion < 1,2° pico a pico, el juego mecanico es 0,8°)
-  desde 80° llega a <1° de la linea en 0.53 s
-== ESCALON DE LA LINEA (8 mm) ==
-  error final -0.03°, sobrepaso 0.00°
-  OK   escalon absorbido sin oscilar
-== LINEA EN MOVIMIENTO (senoidal) ==
-  linea a   10 mm/s pico: error RMS 0.86°, max 1.34°, tiempo perdido 0.00 s
-  OK   sigue la linea sin perderla
-  linea a   25 mm/s pico: error RMS 1.26°, max 2.35°, tiempo perdido 0.00 s
-  OK   sigue la linea sin perderla
-  linea a   45 mm/s pico: error RMS 2.55°, max 3.99°, tiempo perdido 0.00 s
-== LINEA PERDIDA (salto de 45 mm) ==
-  paso a PERDIDO: si, recuperada a <1° en 1.59 s
-  OK   busca y recupera la linea
-== ORDENES EN RAFAGA (robustez del protocolo) ==
-  OK   todas las ordenes validas aplicadas, sin perder letras
-  OK   orden invalida rechazada
-  OK   valor fuera de rango rechazado
-  OK   linea larga descartada
-  bytes perdidos por desborde del buffer: 0
-  OK   el control siguio funcionando durante la rafaga
-== AJUSTES EN VIVO Y PARADA/ARRANQUE (el viejo bug del bucle) ==
-  tras 11 cambios en vivo + stop/goto/run: error medio 0.15°, pico a pico 0.00°
-  OK   vuelve a centrar sin reiniciar la placa
-== GANANCIAS EXAGERADAS (margen de estabilidad) ==
-  ki=8 (el doble): pico a pico 0.00° (comando 0.00°)
+== CALIBRACION DEL PERTURBADOR (calp) ==
+  CP,OK,85.83,7.032,-1,1.049,1,0.24
+  OK   calp exitosa
+  OK   detecto el sentido invertido del engranaje
+  OK   corrigio la relacion real (7,2) a menos de 4 %
+  con lin=0 la linea queda en 89.67° del servo del brazo (se pidio 90° + horn -2.5°)
+  OK   cero de la linea bajo el brazo en 90° (servo)
+== PI POR DEFECTO, LINEA QUIETA ==
+  error medio -0.12°, pico a pico 0.00°
+  OK   centrado y sin bucle
+== MODO P: ERROR DE REGIMEN (didactico) ==
+  P puro kp=1 con la linea a 4° de u0: error de regimen -2.53° (teoria ~ -2°)
+  OK   P puro deja error de regimen
+  PI: error -0.07°
+  OK   PI elimina el error de regimen
+== PID CON DERIVATIVO ==
+  PID: error -0.07°, pico a pico 0.00°
+  OK   PID estable
+== ENSAYOS CON EL LAZO CERRADO ==
+  ens pesc 3
+      fin=si  telemetria=225 lineas  sobrepaso 0 %  establecimiento 0.40 s  error final 0.05°
+  OK   pesc
+  OK     ...llega sin error final
+  ens pesc -3
+     fin=si  telemetria=225 lineas  sobrepaso 0 %  establecimiento 0.40 s  error final 0.00°
+  OK   pesc
+  OK     ...llega sin error final
+  ens resc 1.5
+    fin=si  telemetria=225 lineas  sobrepaso 0 %  establecimiento 0.76 s  error final -0.17°
+  OK   resc
+  OK     ...llega sin error final
+  ens pram 4 2
+    fin=si  telemetria=225 lineas
+  OK   pram
+  ens psen 2 0,5
+  fin=si  telemetria=524 lineas
+  OK   psen
+== ESCALON DEL SERVO A LAZO ABIERTO (sesc) ==
+  servo solo: sobrepaso 0 %, establecimiento 4.00 s, telemetria 225
+  OK   sesc completo y vuelve a reposo
+== INTERRUPTORES Y CORRECCION DE LDR ==
+  OK   sigue con anti-windup, limite de velocidad y zona muerta apagados
+  corr 0 (sin igualar): error medio -1.66°
+  OK   modo manual (ganancia/offset) aceptado
+== PERTURBACION MANUAL CON lin (lazo siguiendo) ==
+  OK   sigue la linea movida por el perturbador
+== ORDENES EN RAFAGA Y COMA DECIMAL ==
+  OK   ordenes validas aplicadas (tambien con coma decimal)
+  OK   ordenes invalidas rechazadas con mensaje
+  OK   el control siguio durante la rafaga
 == EEPROM ==
-  OK   save/load restaura la configuracion y la calibracion
+  OK   save/load restaura parametros y ambas calibraciones
   OK   EEPROM corrupta detectada por CRC
 == SENSOR DESCONECTADO ==
   OK   falla detectada y control detenido
-== ENSAYO DE ESCALON (identificacion) ==
-  lineas de telemetria durante el ensayo: 100 (esperado ~100 a 50 Hz)
-  OK   registro completo del escalon
+== CABEZAL MAL ARMADO (LDR uno detras del otro) ==
+  C,DIAG,5.05,4.79,788,483,92.0,90.7,-1.3
+  ERR,cal,desfase LDR chico: la cinta debe apuntar al eje
+  OK   la calibracion avisa que la cinta/sensores estan mal orientados
 
-ciclos atrasados (lazo de 20 ms): 0
+ciclos atrasados: 0   bytes/s promedio enviados: 1362 (maximo del puerto ~11500)
 RESULTADO: 0 chequeos fallidos

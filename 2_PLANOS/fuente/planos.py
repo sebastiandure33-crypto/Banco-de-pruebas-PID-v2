@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.join(_AQUI, "..", "..", "1_DISENO_3D", "modelo"))
 sys.path.insert(0, _AQUI)
 import numpy as np
 import seguidor as s
+import plataforma as pl
 from manifold3d import Manifold
 from lib_plano import *
 from matplotlib.patches import Arc
@@ -13,7 +14,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 OUT = os.path.join(_AQUI, "..") + os.sep          # 2_PLANOS/
 L = 120.0
-TOTAL = 5
+TOTAL = 6
 GRIS = "#d9d9d9"
 GRIS2 = "#ececec"
 
@@ -488,7 +489,7 @@ def hoja_conjunto(pdf):
 #  HOJA 5 · ESQUEMA ELÉCTRICO
 # ======================================================================================
 def hoja_esquema(pdf):
-    fig, fr = hoja("Esquema eléctrico (cableado actual)", 5, TOTAL, "s/e", "Arduino Nano · 2 LDR · 2 LED blancos · servo SG90 con fuente aparte")
+    fig, fr = hoja("Esquema eléctrico (cableado actual)", 5, TOTAL, "s/e", "Arduino Nano · 2 LDR · 2 LED blancos · 2 servos SG90 con fuente aparte")
     A = fr
     C_W = INK
     def w(*pts, c=C_W, lw=0.9, ls="-"):
@@ -546,7 +547,7 @@ def hoja_esquema(pdf):
     A.add_patch(Rectangle((ax0, ay0), aw, ah, fill=True, fc="#eef3fa", ec=INK, lw=1.1, zorder=2))
     txt(ax0 + aw / 2, ay0 + ah - 9, "ARDUINO NANO", fs=9, ha="center", wgt="bold")
     txt(ax0 + aw / 2, ay0 + ah - 15, "(clon CH340 · USB a la PC)", fs=6.8, ha="center")
-    pins = {"A0": 232, "A1": 174, "D9": 160}
+    pins = {"A0": 232, "A1": 174, "D9": 160, "D10": 153}
     for n, y in pins.items():
         w((ax0 - 4, y), (ax0, y)); txt(ax0 + 2, y, n, fs=7.5, wgt="bold")
     w((ax0 + 20, ay0 + ah), (ax0 + 20, ay0 + ah + 4)); txt(ax0 + 20, ay0 + ah - 3, "5V", fs=7.5, ha="center", wgt="bold")
@@ -582,7 +583,7 @@ def hoja_esquema(pdf):
     # ---------------- alimentación del servo: entrada -> capacitores -> salida al servo
     A.add_patch(Rectangle((22, 62), 30, 42, fill=True, fc="#f4f4f4", ec=INK, lw=1.0, zorder=2))
     txt(37, 94, "ENTRADA", fs=7.5, ha="center", wgt="bold"); txt(37, 89, "alimentación", fs=6.6, ha="center")
-    txt(37, 78, "VCC 5–6 V\n≥ 1 A", fs=7, ha="center")
+    txt(37, 78, "VCC 5–6 V\n≥ 2 A", fs=7, ha="center")
     txt(54, 101, "+", fs=8, wgt="bold"); txt(54, 65, "−", fs=9, wgt="bold")
     w((52, 98), (162, 98)); w((52, 68), (162, 68))
     dot(95, 98); dot(95, 68); dot(130, 98); dot(130, 68)
@@ -597,17 +598,21 @@ def hoja_esquema(pdf):
     w((125.5, 84.5), (134.5, 84.5), lw=1.3); w((125.5, 81.5), (134.5, 81.5), lw=1.3)
     txt(136, 84, "C2 cerámico", fs=7, wgt="bold"); txt(136, 80, "100 nF", fs=6.8)
     txt(112.5, 106, "C1 y C2 en paralelo, entre la entrada y la salida", fs=6.4, ha="center", c="#444")
-    # salida al servo
+    # salida a los servos
     A.add_patch(Rectangle((162, 62), 22, 42, fill=True, fc="#f4f4f4", ec=INK, lw=1.0, zorder=2))
-    txt(173, 94, "SALIDA", fs=7.5, ha="center", wgt="bold"); txt(173, 89, "al servo", fs=6.6, ha="center")
+    txt(173, 94, "SALIDA", fs=7.5, ha="center", wgt="bold"); txt(173, 89, "a los servos", fs=6.3, ha="center")
     txt(165, 98, "+", fs=8, wgt="bold"); txt(165, 68, "−", fs=9, wgt="bold")
-    w((184, 98), (210, 98)); w((184, 68), (210, 68))
-    # servo
-    A.add_patch(Rectangle((210, 62), 40, 42, fill=True, fc="#e6eefb", ec=INK, lw=1.0, zorder=2))
-    A.add_patch(Circle((238, 83), 7, fill=False, ec=INK, lw=0.9, zorder=3)); txt(238, 83, "M", fs=10, ha="center", wgt="bold")
-    txt(213, 98, "rojo +", fs=6.6); txt(213, 83, "naranja\nseñal", fs=6.6); txt(213, 69, "marrón −", fs=6.6)
-    txt(230, 107.5, "SERVO SG90", fs=7.5, ha="center", wgt="bold")
-    w((250, 83), (285, 83), (285, 160), (ax0 - 4, 160))
+    w((184, 98), (250, 98)); w((184, 68), (250, 68))
+    # servos en paralelo sobre la salida: + desde arriba, − desde abajo
+    for x0, nombre in ((196, "SERVO BRAZO"), (244, "SERVO LÍNEA")):
+        A.add_patch(Rectangle((x0, 74), 36, 18, fill=True, fc="#e6eefb", ec=INK, lw=1.0, zorder=2))
+        txt(x0 + 18, 85.5, nombre, fs=6.8, ha="center", wgt="bold"); txt(x0 + 18, 80, "SG90", fs=6.4, ha="center")
+        w((x0 + 6, 98), (x0 + 6, 92)); w((x0 + 6, 68), (x0 + 6, 74))
+        dot(x0 + 6, 98); dot(x0 + 6, 68)
+        txt(x0 + 8, 95, "rojo", fs=6, c="#333"); txt(x0 + 8, 71, "marrón", fs=6, c="#333")
+    # señales (naranja): brazo -> D9 (cruza el + sin conexión), línea -> D10
+    w((226, 92), (226, 107), (289, 107), (289, 160), (ax0 - 4, 160)); txt(228, 104.3, "naranja → D9", fs=6.2, c="#333")
+    w((280, 83), (293, 83), (293, 153), (ax0 - 4, 153)); txt(281.5, 79.5, "naranja → D10", fs=6.2, c="#333")
     # negativo de los capacitores -> GND del Arduino (masa común)
     w((130, 68), (130, 57), (338, 57), (338, ay0 - 4))
     txt(262, 60, "− (en los capacitores) → GND del Arduino", fs=6.6, c="#333")
@@ -624,22 +629,122 @@ def hoja_esquema(pdf):
         txt(tx + 2, y, n, fs=7, ha="center", wgt="bold"); txt(tx + 7, y, a, fs=7); txt(tx + 52, y, b, fs=7)
     # notas
     nx, ny = 132, 46
-    notas = ["Símbolo de tierra = GND del Arduino. Del − de la alimentación del servo, en el punto de los capacitores, sale un cable al GND del Arduino (masa común).",
+    notas = ["Símbolo de tierra = GND del Arduino. Del − de la alimentación de los servos, en el punto de los capacitores, sale un cable al GND del Arduino (masa común).",
              "Divisor de cada LDR: 5V – LDR – nodo – 4,7 kΩ – GND. Del nodo salen 2 cables: a la R y a la entrada analógica.",
              "R_LED: el valor que tengas puesto (típico 150–220 Ω para LED blanco a 5 V ≈ 10–13 mA).",
-             "Firmware v2: LDR izq. = A0, der. = A1 (si están al revés la calibración lo detecta sola).",
+             "Firmware v3: LDR izq. = A0, der. = A1 (si están al revés la calibración lo detecta sola). Servo del brazo D9, servo de la línea (perturbador) D10.",
              "Con los LED en 5V fijos, los parámetros ledi/ledd no actúan; para regular brillo, pasar el + de cada LED a D5/D6."]
     for i, n in enumerate(notas):
         txt(22, ny - i * 6.3 + 6, n, fs=6.9)
     pdf.savefig(fig); fig.savefig(OUT + "hoja5_esquema.png", dpi=110); plt.close(fig)
 
 
+# ======================================================================================
+#  HOJA 6 · PLATAFORMA DE LA LÍNEA Y PERTURBADOR
+# ======================================================================================
+def hoja_plataforma(pdf):
+    fig, fr = hoja("Plataforma de la línea y perturbador", 6, TOTAL, "1:1,5 (detalles indicados)",
+                   "Medidas en mm · pista y sector en PLA blanco mate · resto PLA negro")
+    PED, TRK, SEC, PIN, BRK = pl.make_pedestal(), pl.make_track(), pl.make_sector(), pl.make_pinion(), pl.make_bracket()
+    OSC, MED, CLA = "#cfcfcf", "#e4e4e4", "#fbfbfb"
+
+    # ---------------- vista superior 1:1,25
+    v = Vista(fig, 15, 106, 285, 176, 72, 0, 0.65, "VISTA SUPERIOR (1:1,5)", fr)
+    v.poligonos(p_xy(TRK), fc=OSC); v.poligonos(TRK.slice(pl.Z_SURF - 0.3).to_polygons(), fc=MED)
+    v.poligonos(p_xy(PED), fc=OSC); v.poligonos(PED.slice(pl.Z_SURF + 1.0).to_polygons(), fc=MED)
+    v.poligonos(SEC.slice(pl.Z_FLOOR + 1.5).to_polygons(), fc=CLA)
+    tape = s.cube(pl.TAPE_R[0], pl.TAPE_R[1], -pl.TAPE_W / 2, pl.TAPE_W / 2, 0, 1)
+    v.poligonos(p_xy(tape), fc="#3a3a3a", lw=THIN)
+    v.poligonos(PIN.slice(pl.PIN_Z0 + 2.5).to_polygons(), fc=CLA, lw=THIN)
+    v.poligonos(BRK.slice(pl.Z_TAB2 - 1).to_polygons(), fc="none", lw=THIN)
+    v.cruz(0, 0, 8); v.cruz(pl.X_PIN, 0, 6)
+    for a in (-36, 36):
+        v.eje(0, 0, 175 * math.cos(math.radians(a)), 175 * math.sin(math.radians(a)), 0)
+    v.cota((0, 0), (pl.X_PIN, 0), -118, txt="167,5 (eje del servo → eje del piñón)")
+    v.cota((0, 0), (pl.TRACK_R0, 0), -104, txt="80")
+    pol = lambda r, a: (r * math.cos(math.radians(a)), r * math.sin(math.radians(a)))
+    notas3 = [(pol(pl.TRACK_R1, 22), (190, 112), "R162 · pista ±36°"),
+              (pol(pl.SEC_R0, 14), (20, 100), "R95 · sector ±20° (interior)"),
+              (pol(pl.R_RACK, -14), (200, -82), "R147,5 · primitiva de la cremallera"),
+              (pol(pl.TRACK_R0, -28), (10, -80), "R80 · interior de la pista"),
+              ((120, 6), (95, 122), "cinta negra 19 mm en canal radial (19,6 × 0,4)"),
+              (pol(90.5, -9), (40, -92), "escala grabada ±15° (cada 1°, larga cada 5°)"),
+              ((-22, 22), (-40, 70), "pedestal: el soporte encastra 2 mm (guías para 5 M3)"),
+              ((pl.DOVE["x0"] + 5, 4), (50, 55), "cola de milano"),
+              ((191, 27.5), (205, 50), "soporte del perturbador\n(ranuras: correr 3 mm desengrana)")]
+    for (x, y), (tx, ty), t in notas3:
+        v.nota(x, y, tx, ty, t, fs=6.6)
+    corte_letras(v, -45, 0.01, 200, 0.01, "A")
+
+    # ---------------- detalle piñón 1,5:1
+    v = Vista(fig, 318, 60, 86, 78, 0, 0, 1.5, "PIÑÓN (1,5:1)", fr)
+    pin0 = PIN.translate((-pl.X_PIN, 0, -pl.PIN_Z0))
+    v.poligonos(pin0.slice(2.5).to_polygons(), fc=CLA)
+    v.poligonos(pin0.slice(pl.PIN_T - 0.5).to_polygons(), fc="none", lw=THIN)
+    v.cruz(0, 0, 20)
+    v.diam(0, 0, pl.R_PIN + pl.MOD, 50, 6, "Ø42,5")
+    v.diam(0, 0, pl.R_PIN, 225, 6, "Ø40 prim.")
+
+    # ---------------- corte A-A 1:1
+    v = Vista(fig, 15, 52, 290, 48, 95, 21, 1.0, "CORTE A-A (1:1)", fr)
+    for m in (PED, TRK, SEC, PIN, BRK):
+        cs = c_xz(m, 0.0)
+        if cs: seccion(v, cs)
+    v.poligonos(c_xz(pl.servo2_ghost(), 0.0), fc="none", lw=THIN, ec="#777777")
+    v.poligonos(c_xz(pl.horn2_ghost(), 0.0), fc="none", lw=THIN, ec="#777777")
+    v.cotav(0, pl.Z_SURF + pl.POCKET_BASE, -50, -44, -44, txt="8")
+    v.cotav(0, pl.Z_FLOOR, 102, 104, 104, txt="3")
+    v.cotav(0, pl.Z_SURF, 92, 94, 94, txt="6")
+    v.cotav(pl.Z_FLOOR, pl.Z_FLOOR + pl.SECTOR_T, 110, 112, 112, txt="2,9")
+    v.cotav(pl.PIN_Z0, pl.PIN_TOP, 200, 190, 190, txt="5,05")
+    v.cotav(0, pl.Z_TAB2, 208, 193, 193, d=2)
+    v.nota(176, 32, 150, 40, "servo perturbador boca abajo (orejas apoyadas en el soporte)", fs=6.6)
+    v.nota(pl.X_PIN - 17, pl.PIN_Z0 + 3, 132, 30, "piñón (módulo 1,25 · 32 dientes)", fs=6.6)
+    v.nota(125, pl.Z_FLOOR + 1.5, 70, 20, "sector al ras de la pista", fs=6.6)
+    v.nota(0, pl.Z_SURF + 1.5, 5, 30, "pedestal: el soporte apoya a 6 de la mesa", fs=6.6)
+
+    # ---------------- tablas
+    x0, y = 305, 282
+    fr.text(x0, y, "PIEZAS", fontsize=9, weight="bold")
+    filas = []
+    for nombre, m, col in (("P1 pedestal", PED, "negro"), ("P2 pista", TRK, "blanco"), ("P3 sector", SEC, "blanco"),
+                           ("P4 piñón", PIN, "negro"), ("P5 soporte", BRK, "negro")):
+        b = m.bounding_box()
+        filas.append((nombre, f"{num(b[3]-b[0])} × {num(b[4]-b[1])} × {num(b[5]-b[2])}", col, f"{s.vol(m) * 1.24e-3:.0f} g"))
+    for i, f in enumerate(filas):
+        yy = y - 7 - i * 5.5
+        for dx, t in zip((0, 22, 70, 92), f):
+            fr.text(x0 + dx, yy, t, fontsize=6.8)
+    y = 240
+    fr.text(x0, y, "ENGRANAJE", fontsize=9, weight="bold")
+    datos = [("Módulo / presión", "1,25 / 20°"), ("Cremallera (sector)", f"{pl.Z_RACK} dientes virtuales, R {num(pl.R_RACK)}"),
+             ("Piñón", f"{pl.Z_PIN} dientes, Ø primitivo 40"), ("Relación", f"{pl.RATIO:.3f} : 1".replace(".", ",")),
+             ("1° de servo", f"{1 / pl.RATIO:.3f}° de línea".replace(".", ",")), ("Recorrido (servo 0–180°)", f"±{num(90 / pl.RATIO)}° de línea"),
+             ("Juego entre dientes", "0,15 mm")]
+    for i, (a, b) in enumerate(datos):
+        fr.text(x0, y - 7 - i * 5.2, a, fontsize=6.8); fr.text(x0 + 46, y - 7 - i * 5.2, b, fontsize=6.8)
+    y = 190
+    fr.text(x0, y, "NOTAS", fontsize=9, weight="bold")
+    notas = ["La superficie de la línea queda a 6 mm de la mesa: el soporte",
+             "sube lo mismo (encastrado en el pedestal) y los LDR siguen",
+             "a 7 mm de la superficie.",
+             "Armado del perturbador: piñón al horn y tornillo 2×6 desde abajo",
+             "con el soporte fuera de la pista; después bajar el soporte",
+             "engranando y atornillar (M3) por las ranuras.",
+             "Cero, relación y sentido: «Calibrar el perturbador» (calp).",
+             "Pista y sector en blanco mate: son la superficie que ven los LDR."]
+    for i, t in enumerate(notas):
+        fr.text(x0 - 2, y - 7 - i * 5.0, t, fontsize=6.5)
+    pdf.savefig(fig); fig.savefig(OUT + "hoja6_plataforma.png", dpi=110); plt.close(fig)
+
+
 if __name__ == "__main__":
     import os
     os.makedirs(OUT, exist_ok=True)
-    with PdfPages(OUT + "Planos_Seguidor_SG90.pdf") as pdf:
+    with PdfPages(OUT + "Planos_Banco_PID.pdf") as pdf:
         hoja_servo(pdf)
         hoja_soporte(pdf)
         hoja_brazo(pdf)
         hoja_conjunto(pdf)
         hoja_esquema(pdf)
+        hoja_plataforma(pdf)

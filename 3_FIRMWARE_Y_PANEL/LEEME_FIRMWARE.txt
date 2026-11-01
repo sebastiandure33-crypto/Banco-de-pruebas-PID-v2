@@ -1,133 +1,156 @@
-SEGUIDOR DE LÍNEA v2 - FIRMWARE Y PANEL
-=======================================
+BANCO DE PRUEBAS PID v3 - FIRMWARE Y PANEL
+==========================================
 
 ARCHIVOS
 --------
-seguidor_v2/seguidor_v2.ino   Programa para el Arduino Nano (abrir con el IDE de Arduino).
-panel_v2.html                 Panel de control: abrir con Chrome o Edge en la computadora.
-                              Botón "Demo": reproduce una simulación completa sin placa.
-seguidor_v2.hex               El mismo programa ya compilado (opcional, para cargar con XLoader/avrdude).
-pruebas_simulacion/           Simulación con la que se probó el firmware y sus resultados.
+banco_pid_v3/banco_pid_v3.ino  Programa para el Arduino Nano (abrir con el IDE de Arduino).
+banco_pid_v3.hex               El mismo, ya compilado (opcional: XLoader / avrdude).
+panel_v3.html                  Panel de control: abrir con Chrome o Edge en la computadora.
+                               Botón "Demo": reproduce una sesión completa simulada, sin placa.
+panel/                         Fuente del panel y script que le agrega la demo.
+pruebas_simulacion/            Simulación con la que se probó el firmware y sus resultados.
+anteriores/seguidor_v2/        Versión anterior (seguidor sin banco de pruebas), como referencia.
 
 
 1. CONEXIONES
 -------------
-  LDR izquierdo ... 5V -- LDR -- A0 -- R -- GND
-  LDR derecho ..... 5V -- LDR -- A1 -- R -- GND
-  Servo ........... señal en D9; alimentación aparte con masa común (como ya lo tenés)
-  LED izquierdo ... D5 -- resistencia 220 a 330 Ω -- LED -- GND
-  LED derecho ..... D6 -- resistencia 220 a 330 Ω -- LED -- GND
-
-  * Los LED pasan a pines PWM para poder regular el brillo de cada uno (ledi / ledd).
-    No usar D9 ni D10 para los LED: la librería Servo les quita el PWM.
-  * Cada LED con su propia resistencia. LED verde o blanco: el LDR es más sensible al verde.
-  * Resistencia R de cada LDR: con el cabezal armado y el LED encendido, medir con el
-    multímetro el LDR sobre blanco y sobre la cinta negra, y usar el valor comercial más
-    cercano a raíz(R_blanco x R_negro). Puede ser distinta en cada lado. Probablemente
-    quede entre 4,7k y 10k.
-  * Línea: cinta aisladora negra de 19 mm (los LDR están a 20 mm entre centros).
+  LDR izquierdo ... 5V -- LDR -- A0 -- 4,7k -- GND
+  LDR derecho ..... 5V -- LDR -- A1 -- 4,7k -- GND
+  Servo del brazo . señal D9
+  Servo de la línea (perturbador) . señal D10
+  Alimentación de los dos servos: entrada -> C1 y C2 en paralelo -> salida a los servos
+     (fuente de 5-6 V y 2 A o más). Del negativo, en los capacitores, un cable al GND del Nano.
+  LED ............. como los tenés (5V fijo con resistencia). Opcional: el + de cada LED a D5 / D6
+                    para regular el brillo desde el panel (ledi / ledd).
+  Esquema completo: 2_PLANOS, hoja 5.
 
 
 2. CARGAR EL PROGRAMA
 ---------------------
-  IDE de Arduino -> abrir seguidor_v2/seguidor_v2.ino
-  Herramientas -> Placa: "Arduino Nano"
-                 Procesador: "ATmega328P (Old Bootloader)"  <- casi todos los Nano baratos
-                 (si da error de subida, probar "ATmega328P")
-  Si la PC no reconoce la placa: instalar el driver CH340.
-  No hace falta instalar librerías (Servo y EEPROM vienen con el IDE).
-  Memoria: usa ~59 % del programa y 33 % de la RAM.
+  IDE de Arduino -> abrir banco_pid_v3/banco_pid_v3.ino
+  Placa "Arduino Nano", Procesador "ATmega328P (Old Bootloader)" (si falla, "ATmega328P").
+  Driver CH340 si la PC no reconoce la placa. Sin librerías extra (Servo y EEPROM vienen con el IDE).
+  Memoria: 27,2 KB de 30 KB de programa (89 %), 49 % de RAM.
+  La configuración del v2 guardada en la EEPROM no sirve: el v3 arranca con valores de fábrica.
 
 
-3. PUESTA EN MARCHA (en este orden)
------------------------------------
-  a) Abrir panel_v2.html en Chrome/Edge -> "Conectar placa" -> elegir el puerto.
-     Al conectar la placa se reinicia (es normal); el panel lee todos los parámetros
-     de la placa, así que lo que ves es lo que tiene cargado.
-  b) Montar el brazo con el servo en 90°. Con "Ir a 90" comprobar que quede derecho;
-     si quedó corrido por el salto del estriado, corregir con "trim" (grados).
-  c) Mirar "Lectura cruda del ADC": sobre blanco conviene 600-900 y sobre negro
-     bastante menos. Si un lado está muy bajo, subir su resistencia o su LED.
-  d) Poner la cinta quieta bajo el brazo, con blanco a ambos lados -> "Calibrar".
-     El brazo barre el recorrido tres veces (~25 s). Resultado esperado:
-       - contraste de cada lado de 2x o más (la simulación dio ~4,9x)
-       - retardo medido de pocos grados
-       - las dos curvas del gráfico cruzan el cero casi en el mismo punto
-     Si falla, el mensaje dice por qué (contraste, centro no encontrado, etc.).
-  e) "Guardar en la placa". Mientras no guardes, el panel muestra "Cambios sin guardar"
-     y al reiniciar la placa se vuelve a lo guardado.
-  f) "Seguir". Mover la cinta y mirar el gráfico de error.
+3. ORDEN DE TRABAJO EN EL PANEL
+-------------------------------
+  Arriba, siempre visibles: conexión, estado, si están calibrados el brazo y el perturbador,
+  "Cambios sin guardar" + Guardar / Recargar, y STOP. Debajo, la franja en vivo (brazo, línea,
+  s, p, error, salida del PID, lecturas crudas y corregidas).
+
+  1 · SENSORES
+     - Lecturas en vivo con las marcas de negro y blanco; aviso si un LDR se satura.
+     - "Calibrar con el brazo": cinta quieta APUNTANDO AL EJE DEL SERVO, blanco a ambos lados.
+       Informa contraste, crudo en blanco (saturación), ángulo donde cada LDR ve más negro y el
+       DESFASE entre los dos (debe ser de unos 9-10°; si es menor de 3° la calibración se rechaza
+       porque la cinta o los sensores están mal orientados).
+     - "Calibrar el perturbador": el brazo queda en 90° y el servo de la línea barre ida y vuelta.
+       Encuentra el cero (línea justo bajo el brazo en 90°), corrige la relación real del
+       engranaje y detecta si el sentido está invertido.
+     - Corrección de los LDR (corr):
+         Sin igualar  misma escala para los dos: muestra el efecto de sensores distintos.
+         Automática   cada uno entre su negro y su blanco (lo recomendado).
+         Manual       crudo x ganancia + offset por canal (el "potenciómetro digital");
+                      el botón "Igualar con la calibración" los calcula solo.
+       Después de cambiar el modo conviene volver a calibrar con el brazo.
+
+  2 · SERVO Y LÍNEA
+     - Mover el brazo (goto) y la línea (lin). Con el control andando, mover la línea es una
+       perturbación manual. "Fijar cero aquí" toma la posición actual como cero.
+     - Identificar el servo a lazo abierto (ensayo "Servo"): poner el brazo sobre la línea y usar
+       escalones chicos. Si no llega, es el juego del servo y su zona muerta.
+
+  3 · CONTROLADOR
+     - Tipo: P, PI, PD o PID. Ganancias Kp, Ki, Kd. Derivativo sobre el error o sobre la medición,
+       con filtro.
+     - Mejoras que se prenden y apagan para comparar: anti-windup, límite de velocidad, zona muerta,
+       refuerzo fuera de rango, búsqueda al perder la línea.
+     - Avanzado: período del lazo (10-50 ms) y centro u0.
+     - Presets guardados en la computadora (5 de fábrica + los tuyos).
+     - Todo se aplica en vivo; la placa responde con el valor aplicado.
+
+  4 · ENSAYOS
+     Escalón de perturbación  la línea salta A grados (servo de la línea).
+     Escalón de referencia    se pide que el brazo quede A grados corrido de la línea.
+     Rampa                    la línea se mueve a velocidad constante.
+     Senoidal                 la línea oscila 5 ciclos: ganancia y fase (punto de Bode).
+     Servo (lazo abierto)     escalón del servo del brazo sin control.
+     El panel arranca el control si hace falta, registra todo a 50 Hz y calcula:
+     subida (o recuperación) 10-90 %, sobrepaso, establecimiento, error final, error máximo,
+     IAE, ISE, oscilaciones; en la rampa el error medio; en la senoidal ganancia y fase.
+     Zona lineal de los LDR: la muestra el panel (unos ±1,2° con este cabezal). Con amplitudes
+     mayores el error medido se satura y las métricas quedan marcadas como aproximadas.
+
+  5 · RESULTADOS
+     Tabla de todos los ensayos (guardados en la computadora), superposición de hasta 4 y
+     exportación a CSV (resumen y muestras), con coma decimal para Excel.
+
+  Consola y placa (abajo, plegada): órdenes a mano, versión, causa del último reinicio, líneas
+  perdidas, valores de fábrica.
 
 
-4. AJUSTE (si hace falta)
--------------------------
-  Síntoma                                         Qué tocar
-  Oscila / zumba alrededor de la línea .......... bajar ki (ej. 6 -> 4) o subir zm (0,2 -> 0,4)
-  Oscila lento con sobrepaso grande ............. bajar kp (0,4 -> 0,25)
-  Se atrasa mucho con la línea en movimiento .... subir ki de a 1 (atraso ≈ velocidad / ki)
-  Pierde la línea cuando se mueve rápido ........ subir ksat (3 -> 5) o vmax
-  Mucho ruido en las negruras ................... subir tau (40 -> 60 ms); más tau = más retardo
-  Un lado ve mucho menos luz .................... subir su LED (ledi/ledd) o cambiar su R
-  Tarda en reencontrar la línea ................. subir vbusq o bajar thold
-
-  Valores por defecto: kp 0,4 · ki 6 · ksat 3 · zm 0,2 · tau 40 ms · vmax 150 °/s.
-  En la simulación se mantuvieron estables aun con un sistema 3 veces más lento de lo
-  previsto; con kp 0,5 y ki 8 sigue mejor pero oscila si el sistema real es lento.
+4. PRIMER USO
+-------------
+  a) Conectar, mirar 1·Sensores: en blanco cada LDR entre 600 y 900. Si uno pasa de 1000 está
+     saturado: bajar su resistencia o el brillo de su LED.
+  b) Servo del brazo en 90° (2·Servo y línea, "Ir a 90°"); corregir el horn con "trim".
+  c) Calibrar con el brazo. Luego Calibrar el perturbador. Guardar en la placa.
+  d) 3·Controlador -> "Seguir la línea". 4·Ensayos -> Escalón de perturbación de 1-2°.
+  e) Cambiar una cosa por vez (Kp, Ki, un interruptor), repetir el ensayo y comparar en Resultados.
 
 
-5. CÓMO FUNCIONA (resumen)
+5. ÓRDENES (también desde el Monitor Serie, 115200, "Nueva línea"; acepta punto o coma decimal)
+-----------------------------------------------------------------------------------------------
+  get                     parámetros (P), calibración (K) y estado (ST)
+  set <nombre> <valor>    cambia un parámetro; responde P,... o ERR,...
+  run / stop              seguir la línea / detener todo
+  cal / calp              calibrar con el brazo / calibrar el perturbador
+  goto <grados>           mover el brazo (lazo abierto)
+  lin <grados>            mover la línea (también con el control andando)
+  lcero                   la posición actual de la línea pasa a ser 0
+  ens pesc <A>            escalón de perturbación      ens resc <A>   escalón de referencia
+  ens sesc <A>            escalón del servo (lazo abierto, desde reposo)
+  ens pram <A> <°/s>      rampa de la línea            ens psen <A> <Hz>   senoidal (5 ciclos)
+  save / load / defaults  guardar en EEPROM / recargar / valores de fábrica
+  tel 1 / tel 0           telemetría      status   estado
+
+  Parámetros: modo kp ki kd kdf dmed aw zm ksat lvel vmax per u0 busq amin amax trim
+              pcen prel psig plmax pvel corr gi oi gd od tau vison visoff ledi ledd
+              tdur tpre vbusq vcal thold teldiv
+
+  Mensajes de la placa:
+    T,seq,ms,estado,rawI,rawD,cI,cD,s,p,ref,e,P,I,D,u,th,L     telemetría
+    E,inicio,... / E,disparo,seq,... / E,fin,seq               ensayos
+    C,DIAG,... / C,OK,... / CS,... / CP,OK,...                 calibraciones
+    P,... K,... ST,... S,... OK,... ERR,... I,... BOOT,...
+
+
+6. CÓMO FUNCIONA (resumen)
 --------------------------
-  * Cada lectura se convierte en conductancia del LDR y se normaliza entre el negro y el
-    blanco de ESE sensor: dos LDR que miden el doble uno del otro quedan comparables sin
-    "factor de balance".
-  * s = (negroDer - negroIzq) / (negroDer + negroIzq), de -1 a 1; 0 = línea centrada.
-  * La calibración mide cuánto cambia s por grado; el error queda en grados reales.
-  * Control PI posicional con UNA sola integración (el código viejo integraba dos veces,
-    y eso fabricaba el bucle). Lazo fijo de 20 ms, nada bloquea.
-  * Línea perdida: se queda quieto "thold" ms y después busca hacia el último lado donde
-    la vio. No inventa el error con la posición del servo.
-  * Sin compensación de backlash por software y sin soltar el servo (detach): eran las
-    otras causas del desfase.
-  * Se detecta un LDR desconectado o en corto (estado FALLA).
-  * La configuración se guarda con verificación (CRC): una EEPROM corrupta no se carga.
-  * Al arrancar informa la causa del reinicio (encendido, botón/puerto, caída de tensión).
-    Si alguna vez aparece "caida de tension", el problema es de alimentación.
-  * Watchdog desactivado a propósito: con el bootloader viejo de los Nano baratos puede
-    dejar la placa reiniciándose en bucle. Se activa con USAR_WATCHDOG 1 solo con Optiboot.
+  p = s / pendiente : posición del brazo respecto de la línea, en grados (medida por los LDR).
+  e = ref - p       : error (ref = 0 salvo en el escalón de referencia).
+  u = u0 + P + I + D: ángulo pedido al servo del brazo.
+     P = Kp·e   I += Ki·e·dt (con anti-windup opcional)   D = Kd·de/dt filtrado (o -dp/dt).
+  Con P puro queda error de régimen si la línea no está en u0; el I lo elimina.
+  El servo de la línea se mueve en grados de línea: servo = pcen + psig·prel·L.
+  Las métricas las calcula el panel con la telemetría del ensayo (cada ciclo de 20 ms).
+  La configuración se guarda con CRC; el arranque informa la causa del reinicio.
+  Watchdog apagado (bootloader viejo de los Nano baratos); USAR_WATCHDOG 1 solo con Optiboot.
 
 
-6. ÓRDENES (también se pueden escribir en el Monitor Serie, 115200, con "Nueva línea")
---------------------------------------------------------------------------------------
-  get                 todos los parámetros y la calibración
-  set <nombre> <val>  cambiar un parámetro (responde con el valor aplicado o el error)
-  run / stop          seguir / detener
-  cal                 calibrar
-  goto <grados>       mover el brazo
-  esc <grados>        ensayo de escalón: salto brusco y registro de 2 s a 50 Hz
-  save / load         guardar / recargar lo guardado
-  defaults            valores de fábrica
-  tel 1 / tel 0       telemetría continua
-  status              estado
-
-  Parámetros: kp ki ksat zm vmax vbusq vcal thold amin amax trim tau vison visoff ledi ledd teldiv
-
-
-7. QUÉ SE PROBÓ ANTES DE ENTREGARLO
------------------------------------
-  Compilado para ATmega328P con el núcleo oficial de Arduino: sin errores ni advertencias.
-  Probado en una simulación física (pruebas_simulacion/), con: servo con zona muerta, latencia
-  y juego de 0,8°; brazo de 120 mm; dos LDR lentos y distintos (10k y 20k, divisores de 4,7k y
-  10k, LED con brillo distinto); ruido del ADC; puerto serie a 115200 con buffer de 64 bytes.
-  16 chequeos, todos aprobados con el sistema a velocidad normal, 2x y 3x más lento:
-
-    Calibración ................ centro a 0,01° del real
-    Línea quieta ............... error medio 0,02-0,15°, sin oscilación
-    Línea en movimiento ........ 10 mm/s: error RMS 0,9° · 25 mm/s: 1,3° · 45 mm/s: 2,6° (sin perderla)
-    Línea perdida (salto 45 mm)  la reencuentra en ~1,6 s
-    Ráfaga de órdenes .......... ninguna letra perdida; inválidas rechazadas con mensaje
-    11 cambios en vivo + stop/goto/run ... vuelve a centrar sin reiniciar la placa
-    EEPROM ..................... guarda/recarga; detecta datos corruptos
-    LDR desconectado ........... pasa a FALLA y detiene el control
-
-  Es una simulación: tu servo, tus LDR y tu iluminación reales van a ser distintos. Por
-  eso los valores se leen siempre de la placa y se pueden ajustar en vivo desde el panel.
+7. QUÉ SE PROBÓ
+---------------
+  Compilado para ATmega328P con el núcleo oficial de Arduino, sin advertencias.
+  Simulación (pruebas_simulacion/): 31 chequeos aprobados con la planta a velocidad normal,
+  2 y 3 veces más lenta:
+    calibración del brazo: centro a 0,01° del real, desfase entre LDR medido (10,2°)
+    calibración del perturbador: detecta el sentido invertido, corrige la relación (7,2) y el cero
+    PI centrado sin bucle; P puro deja error de régimen (-2,5°) y el PI lo elimina; PID estable
+    los 5 ensayos completos con telemetría a 50 Hz; escalones sin error final
+    interruptores apagados, corrección sin igualar y manual, perturbación manual con lin
+    ráfaga de órdenes, coma decimal, EEPROM con CRC, LDR desconectado
+    cabezal mal armado (LDR uno detrás del otro): la calibración lo rechaza con el aviso
+  Panel probado con la demo (6 ensayos con métricas) y con un puerto serie simulado.
+  Es una simulación: tus servos, tus LDR y tu luz van a dar números distintos.

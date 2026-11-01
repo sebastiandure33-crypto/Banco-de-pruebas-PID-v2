@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banco PID v3</title>
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f3f2ee;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a; --series-4:#eda100;
+  --good:#0ca30c; --good-ink:#006300; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --accent:#2a78d6; --accent-ink:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232321;
+    --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70; --series-4:#c98500;
+    --good-ink:#0ca30c; --accent:#3987e5;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232321;
+  --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70; --series-4:#c98500;
+  --good-ink:#0ca30c; --accent:#3987e5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.top{position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--border)}
+.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 16px}
+.bar h1{font-size:16px;margin:0 6px 0 0;font-weight:650;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.badge b{color:var(--ink);font-weight:650}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--good)}
+.est-SIGUE .dot{background:var(--good)} .est-PERDIDO .dot{background:var(--warn)} .est-FALLA .dot{background:var(--crit)}
+.est-CALIB .dot,.est-CALP .dot,.est-ENSAYO .dot,.est-MANUAL .dot{background:var(--accent)}
+.ok-si{color:var(--good-ink)} .ok-no{color:var(--crit)}
+.sp{flex:1}
+button{font:inherit;padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--axis)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+button.stop{background:var(--crit);color:#fff;border-color:transparent;font-weight:700;padding:7px 18px;letter-spacing:.03em}
+button.danger{color:var(--crit)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.strip{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:1px;background:var(--border);border-top:1px solid var(--border)}
+.strip div{background:var(--surface);padding:5px 12px}
+.strip .l{font-size:11.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .v{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.strip .u{font-size:11.5px;color:var(--muted);margin-left:2px;font-weight:400}
+@media (max-width:900px){.strip{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:700px){.top{position:static} .strip .v{font-size:15px} .strip div{padding:4px 8px}}
+nav.tabs{display:flex;gap:2px;padding:0 12px;overflow-x:auto;border-top:1px solid var(--border)}
+nav.tabs button{border:0;border-radius:0;background:transparent;padding:9px 14px;color:var(--ink-2);border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs button.act{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1500px;margin:0 auto;padding:16px}
+.tab{display:none} .tab.act{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+@media (max-width:1050px){.grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.card h2{font-size:14px;margin:0 0 4px;font-weight:650}
+.card h3{font-size:12px;margin:14px 0 4px;color:var(--ink-2);font-weight:650;text-transform:uppercase;letter-spacing:.04em}
+.lead{font-size:12.5px;color:var(--ink-2);margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=number],input[type=text],select{font:inherit;padding:6px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);color:var(--ink)}
+input[type=number]{width:84px}
+input[type=text]{width:100%}
+.ps:empty::before{content:"(conectá la placa)";font-size:12px;color:var(--muted)}
+.param{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:7px 0;border-top:1px solid var(--border)}
+.ps:first-child .param,.param.first{border-top:0}
+.param label{font-weight:600;font-size:13px} .param label code{font-weight:500;color:var(--muted);margin-left:6px;font-size:12px}
+.param input[type=range]{grid-column:1/3;width:100%;accent-color:var(--accent)}
+.param p{grid-column:1/3;margin:0;font-size:12px;color:var(--ink-2)}
+.param.pend input,.param.pend .seg{outline:2px solid var(--warn);outline-offset:1px}
+.param.err input,.param.err .seg{outline:2px solid var(--crit);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface-2)}
+.seg button{border:0;border-radius:0;padding:6px 12px;background:transparent;border-left:1px solid var(--border)}
+.seg button:first-child{border-left:0}
+.seg button.act{background:var(--accent);color:var(--accent-ink)}
+.param .seg{grid-column:1/3;justify-self:start}
+.sw{position:relative;width:38px;height:22px;flex:none}
+.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:var(--axis);border-radius:999px;cursor:pointer;transition:.15s}
+.sw span::after{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+.sw input:checked+span{background:var(--accent)} .sw input:checked+span::after{transform:translateX(16px)}
+.chart{position:relative}
+.chart canvas{display:block;width:100%;height:170px}
+.chart.alto canvas{height:230px}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--ink-2);margin:0 0 4px;flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.ctitle{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:10px 0 2px}
+.ctitle b{font-size:13px} .ctitle span{font-size:12px;color:var(--muted)}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:6px 9px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;white-space:nowrap;color:var(--ink);z-index:2}
+.tip i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px}
+.kv span:nth-child(odd){color:var(--ink-2)}
+.note{font-size:12.5px;color:var(--ink-2);margin:8px 0 0}
+.aviso{font-size:12.5px;padding:7px 10px;border-radius:8px;background:var(--surface-2);border-left:3px solid var(--warn);margin:8px 0 0}
+.aviso.mal{border-left-color:var(--crit)} .aviso.bien{border-left-color:var(--good)}
+.chan{display:grid;grid-template-columns:70px 1fr 70px;gap:4px 10px;align-items:center;font-size:12.5px;margin:6px 0}
+.meter{position:relative;height:14px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.meter i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+.meter b{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink-2)}
+.chan .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.tests{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.test{border:1px solid var(--border);border-radius:10px;padding:9px 11px;cursor:pointer;background:var(--surface-2)}
+.test.act{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.test b{display:block;font-size:13px} .test span{font-size:12px;color:var(--ink-2)}
+.mets{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.met{background:var(--surface-2);border-radius:10px;padding:8px 10px}
+.met .l{font-size:12px;color:var(--ink-2)} .met .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.met .u{font-size:12px;color:var(--muted);margin-left:2px;font-weight:400}
+table.data{border-collapse:collapse;font-size:12.5px;width:100%}
+table.data td,table.data th{padding:5px 6px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.data th{color:var(--ink-2);font-weight:600;font-size:12px}
+table.data td:first-child,table.data th:first-child,table.data td.t{text-align:left}
+.scroll{overflow-x:auto}
+details.card summary{cursor:pointer;font-weight:650}
+#log{height:240px;overflow:auto;font:12px/1.4 ui-monospace,Consolas,monospace;background:var(--surface-2);border-radius:8px;padding:8px;white-space:pre-wrap;word-break:break-word}
+#log .tx{color:var(--series-1)} #log .err{color:var(--crit)} #log .ok{color:var(--good-ink)} #log .sys{color:var(--muted)}
+#toast{position:fixed;right:16px;bottom:16px;max-width:440px;padding:10px 14px;border-radius:10px;background:var(--surface);
+  border:1px solid var(--border);box-shadow:0 6px 24px rgba(0,0,0,.18);display:none;z-index:9}
+#toast.err{border-color:var(--crit)}
+.chip{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin-right:4px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="bar">
+    <h1>Banco PID v3</h1>
+    <button id="btnCon" class="primary">Conectar placa</button>
+    <button id="btnDemo" title="Reproduce una grabación de la simulación del firmware, sin placa">Demo</button>
+    <select id="selVel" title="Velocidad de la demo" style="display:none"><option value="1">x1</option><option value="3">x3</option><option value="8">x8</option></select>
+    <span class="badge"><span class="dot" id="dCon"></span><b id="tCon">Sin conexión</b></span>
+    <span class="badge" id="bEst"><span class="dot"></span>Estado <b id="tEst">—</b></span>
+    <span class="badge">Brazo calibrado <b id="tCal">—</b></span>
+    <span class="badge">Perturbador calibrado <b id="tCalp">—</b></span>
+    <span class="sp"></span>
+    <span class="badge" id="bDirty" style="display:none">⚠ <b>Cambios sin guardar</b></span>
+    <button id="btnSave" data-cmd="save">Guardar en la placa</button>
+    <button id="btnLoad" data-cmd="load" title="Descarta los cambios y vuelve a lo guardado en la placa">Recargar</button>
+    <button class="stop" data-cmd="stop" title="Detiene todo (control, ensayo o calibración)">STOP</button>
+  </div>
+  <div class="strip">
+    <div><div class="l">Brazo (servo)</div><div class="v"><span id="vTh">—</span><span class="u">°</span></div></div>
+    <div><div class="l">Línea (perturbador)</div><div class="v"><span id="vL">—</span><span class="u">°</span></div></div>
+    <div><div class="l">Posición s</div><div class="v"><span id="vS">—</span></div></div>
+    <div><div class="l">Brazo − línea (p)</div><div class="v"><span id="vP">—</span><span class="u">°</span></div></div>
+    <div><div class="l">Error e</div><div class="v"><span id="vE">—</span><span class="u">°</span></div></div>
+    <div><div class="l">Salida PID u</div><div class="v"><span id="vU">—</span><span class="u">°</span></div></div>
+    <div><div class="l">Crudo izq / der</div><div class="v"><span id="vR">—</span></div></div>
+    <div><div class="l">Corregido izq / der</div><div class="v"><span id="vC">—</span></div></div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="sens" class="act">1 · Sensores</button>
+    <button data-tab="planta">2 · Servo y línea</button>
+    <button data-tab="ctrl">3 · Controlador</button>
+    <button data-tab="ens">4 · Ensayos</button>
+    <button data-tab="res">5 · Resultados</button>
+  </nav>
+</div>
+
+<main>
+<!-- ============================================================ 1 SENSORES -->
+<section class="tab act" id="tab-sens">
+<div class="grid">
+  <div class="col">
+    <div class="card">
+      <h2>Lecturas en vivo</h2>
+      <p class="lead">Crudo del ADC (0–1023) y brillo corregido (0 = negro, 1 = blanco). Las marcas son el negro y el blanco de la última calibración.</p>
+      <div class="chan"><span>Izquierdo</span><div class="meter" id="mI"><i style="background:var(--series-1)"></i><b class="mn"></b><b class="mx"></b></div><span class="n" id="nI">—</span></div>
+      <div class="chan"><span>Derecho</span><div class="meter" id="mD"><i style="background:var(--series-2)"></i><b class="mn"></b><b class="mx"></b></div><span class="n" id="nD">—</span></div>
+      <div id="avisoSens"></div>
+      <div id="cRaw"></div><div id="cCorr"></div>
+    </div>
+    <div class="card">
+      <h2>Diagnóstico por barrido</h2>
+      <p class="lead">Calibrar el brazo: cinta quieta apuntando al eje del servo, blanco a ambos lados; el brazo barre tres veces (~25 s).
+        Calibrar el perturbador (después): el brazo queda en 90° y el servo de la línea barre ida y vuelta.</p>
+      <div class="row"><button class="primary" data-cmd="cal">Calibrar con el brazo</button><button data-cmd="calp">Calibrar el perturbador</button></div>
+      <div id="cA"></div><div id="cS"></div><div id="cSL"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>Resultado del diagnóstico</h2>
+      <div class="kv" id="diag"><span>Estado</span><span>sin datos</span></div>
+      <div id="avisoDiag"></div>
+    </div>
+    <div class="card">
+      <h2>Corrección de los LDR</h2>
+      <p class="lead">Cómo se igualan los dos sensores antes de calcular la posición de la línea.</p>
+      <div class="ps" data-p="corr"></div>
+      <div id="manual" style="display:none">
+        <h3>Manual: crudo × ganancia + offset</h3>
+        <div class="ps" data-p="gi"></div><div class="ps" data-p="oi"></div>
+        <div class="ps" data-p="gd"></div><div class="ps" data-p="od"></div>
+        <div class="kv" style="margin-top:6px"><span>Izquierdo corregido</span><span id="vMI">—</span><span>Derecho corregido</span><span id="vMD">—</span></div>
+        <button id="btnIgualar" style="margin-top:8px" title="Calcula ganancia y offset para que los dos lean igual en blanco y en negro (usa la última calibración)">Igualar con la calibración</button>
+      </div>
+      <div id="avisoCorr"></div>
+    </div>
+    <div class="card">
+      <h2>Filtro y umbrales</h2>
+      <div class="ps" data-p="tau"></div><div class="ps" data-p="vison"></div><div class="ps" data-p="visoff"></div>
+      <div class="ps" data-p="ledi"></div><div class="ps" data-p="ledd"></div><div class="ps" data-p="vcal"></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ 2 SERVO Y LÍNEA -->
+<section class="tab" id="tab-planta">
+<div class="grid">
+  <div class="col">
+    <div class="card">
+      <h2>Posiciones</h2>
+      <p class="lead">Ángulo pedido y enviado al servo del brazo, y posición de la línea (en grados del brazo).</p>
+      <div id="cPlanta"></div>
+    </div>
+    <div class="card">
+      <h2>Identificar el servo (lazo abierto)</h2>
+      <p class="lead">Escalón brusco del servo del brazo sin control: muestra su retardo, velocidad y juego. Poner antes el brazo sobre la línea
+        (Ir a la línea) y usar escalones chicos, dentro de la zona lineal de los LDR (<span id="zl1">±?°</span>).</p>
+      <div class="row"><button id="btnALinea">Ir a la línea</button>
+        <label>Escalón <input type="number" id="inSesc" value="1" step="0.1"> °</label><button class="primary" id="btnSesc">Ensayar</button></div>
+      <p class="note">El resultado queda en Resultados como «Servo (lazo abierto)».</p>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>Brazo · servo D9</h2>
+      <div class="row"><input type="range" id="rgGoto" min="60" max="120" step="0.5" value="90" style="flex:1;accent-color:var(--accent)">
+        <input type="number" id="inGoto" value="90" step="0.5"><button id="btnGoto">Ir</button></div>
+      <div class="row" style="margin-top:6px"><button data-cmd="goto 90">Ir a 90°</button></div>
+      <h3>Montaje y límites</h3>
+      <div class="ps" data-p="trim"></div><div class="ps" data-p="amin"></div><div class="ps" data-p="amax"></div>
+    </div>
+    <div class="card">
+      <h2>Línea · perturbador D10</h2>
+      <div class="row"><input type="range" id="rgLin" min="-12" max="12" step="0.1" value="0" style="flex:1;accent-color:var(--accent)">
+        <input type="number" id="inLin" value="0" step="0.1"><button id="btnLin">Mover</button></div>
+      <div class="row" style="margin-top:6px"><button data-cmd="lin 0">Línea a 0</button>
+        <button data-cmd="lcero" title="La posición actual de la línea pasa a ser el cero">Fijar cero aquí</button></div>
+      <p class="note">Con el control andando, mover la línea es una perturbación manual.</p>
+      <h3>Engranaje</h3>
+      <div class="ps" data-p="pcen"></div><div class="ps" data-p="prel"></div><div class="ps" data-p="psig"></div>
+      <div class="ps" data-p="plmax"></div><div class="ps" data-p="pvel"></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ 3 CONTROLADOR -->
+<section class="tab" id="tab-ctrl">
+<div class="grid">
+  <div class="col">
+    <div class="card">
+      <div class="row"><h2 style="margin:0">Respuesta en vivo</h2><span class="sp"></span>
+        <button class="primary" data-cmd="run">▶ Seguir la línea</button><button data-cmd="stop">■ Detener</button></div>
+      <div id="cErr"></div><div id="cPID"></div><div id="cU"></div>
+    </div>
+    <div class="card">
+      <h2>Presets</h2>
+      <p class="lead">Juegos de parámetros guardados en esta computadora. Aplicar envía cada valor a la placa.</p>
+      <div class="row"><select id="selPre" style="min-width:220px"></select><button id="btnPreAp" class="primary">Aplicar</button>
+        <span class="sp"></span><input type="text" id="inPre" placeholder="nombre" style="width:150px"><button id="btnPreSv">Guardar actual</button><button id="btnPreDel" class="danger">Borrar</button></div>
+      <p class="note" id="preDesc"></p>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>Tipo de controlador</h2>
+      <div class="ps" data-p="modo"></div>
+      <p class="note">u = u0 + P + I + D  ·  e = ref − p  (grados)</p>
+    </div>
+    <div class="card">
+      <h2>Ganancias</h2>
+      <div class="ps" data-p="kp"></div><div class="ps" data-p="ki"></div><div class="ps" data-p="kd"></div>
+      <h3>Derivativo</h3>
+      <div class="ps" data-p="dmed"></div><div class="ps" data-p="kdf"></div>
+    </div>
+    <div class="card">
+      <h2>Mejoras (prender/apagar para comparar)</h2>
+      <div class="ps" data-p="aw"></div><div class="ps" data-p="lvel"></div><div class="ps" data-p="vmax"></div>
+      <div class="ps" data-p="zm"></div><div class="ps" data-p="ksat"></div><div class="ps" data-p="busq"></div>
+    </div>
+    <div class="card">
+      <h2>Avanzado</h2>
+      <div class="ps" data-p="per"></div><div class="ps" data-p="u0"></div><div class="ps" data-p="vbusq"></div><div class="ps" data-p="thold"></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ 4 ENSAYOS -->
+<section class="tab" id="tab-ens">
+<div class="grid">
+  <div class="col">
+    <div class="card">
+      <h2>Ensayo</h2>
+      <div class="tests" id="tests"></div>
+      <div class="row" style="margin-top:10px" id="ensIn"></div>
+      <div class="row" style="margin-top:10px"><button class="primary" id="btnEns">▶ Ejecutar ensayo</button>
+        <span class="note" id="ensMsg" style="margin:0"></span></div>
+      <p class="note" id="ensDesc"></p>
+      <div id="avisoEns"></div>
+    </div>
+    <div class="card">
+      <h2>Registro del ensayo</h2>
+      <p class="lead">El tiempo 0 es el instante de la perturbación.</p>
+      <div id="cER"></div><div id="cEE"></div><div id="cEP"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>Métricas del último ensayo</h2>
+      <div id="metsUlt"><p class="note">Todavía no hay ensayos.</p></div>
+    </div>
+    <div class="card">
+      <h2>Duración</h2>
+      <div class="ps" data-p="tpre"></div><div class="ps" data-p="tdur"></div>
+      <p class="note">La senoidal dura siempre 5 ciclos; ganancia y fase se calculan con los ciclos 2 a 5.</p>
+    </div>
+    <div class="card">
+      <h2>Controlador en uso</h2>
+      <div class="kv" id="ctrlRes"></div>
+      <p class="note">Se cambia en la pestaña Controlador.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ 5 RESULTADOS -->
+<section class="tab" id="tab-res">
+<div class="col">
+  <div class="card">
+    <div class="row"><h2 style="margin:0">Ensayos guardados</h2><span class="sp"></span>
+      <button id="btnCsvRes">Exportar resumen (CSV)</button><button id="btnCsvMu">Exportar muestras de los marcados (CSV)</button>
+      <button id="btnBorrar" class="danger">Borrar marcados</button></div>
+    <p class="lead">Se guardan en esta computadora. Marcá hasta 4 para superponerlos.</p>
+    <div class="scroll"><table class="data" id="tblRes"></table></div>
+  </div>
+  <div class="card">
+    <h2>Comparación</h2>
+    <p class="lead">Respuesta de cada ensayo marcado (misma escala de tiempo, 0 = perturbación).</p>
+    <div id="cComp"></div><div id="cCompE"></div>
+  </div>
+</div>
+</section>
+
+<details class="card" style="margin-top:16px" id="detCons">
+  <summary>Consola y placa</summary>
+  <div class="grid" style="margin-top:10px">
+    <div>
+      <div id="log"></div>
+      <div class="row" style="margin-top:8px"><input type="text" id="inCmd" placeholder="orden, ej: set kp 0.4   (Enter)"></div>
+      <label class="note"><input type="checkbox" id="chkT"> mostrar telemetría (T,…)</label>
+    </div>
+    <div>
+      <div class="kv"><span>Firmware</span><span id="tFw">—</span><span>Último reinicio</span><span id="tBoot">—</span>
+        <span>Líneas perdidas</span><span id="tLost">0</span><span>Ciclos atrasados</span><span id="tAtr">0</span></div>
+      <div class="ps" data-p="teldiv" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:10px"><button class="danger" id="btnDef">Valores de fábrica</button></div>
+    </div>
+  </div>
+</details>
+</main>
+<div id="toast"></div>
+<script type="text/plain" id="demoData">__DEMO__</script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fx = (v,d=2) => (v===null||v===undefined||!isFinite(v)) ? "—" : (+v).toFixed(d);
+function tryLS(fn, def){ try{ return fn(); }catch{ return def; } }
+
+/* ================================================================== parámetros */
+const INFO = {
+  modo:["Tipo","P: solo proporcional (queda error de régimen). PI: elimina el error. PD/PID: el D frena la llegada."],
+  kp:["Kp (proporcional)","Grados de salida por grado de error. Más alto = más rápido; con el retardo de los LDR, demasiado alto oscila."],
+  ki:["Ki (integral, 1/s)","Velocidad con la que el integrador corrige el error que queda. Atraso con la línea en movimiento ≈ velocidad / Ki."],
+  kd:["Kd (derivativo, s)","Reacciona a la velocidad del error. Amortigua, pero amplifica el ruido de los LDR."],
+  kdf:["Filtro del D (ms)","Suaviza el término derivativo. 0 = sin filtro."],
+  dmed:["D calculado","Sobre la medición evita el golpe del D al cambiar la referencia."],
+  aw:["Anti-windup","No integra mientras la salida está saturada (límites o velocidad)."],
+  lvel:["Límite de velocidad","Limita los °/s del brazo a vmax."],
+  vmax:["Velocidad máxima (°/s)","Solo si el límite de velocidad está prendido."],
+  zm:["Zona muerta (°)","Errores menores se ignoran (0 = apagada). Evita que el servo zumbe."],
+  ksat:["Refuerzo fuera de rango","Multiplica Ki cuando la línea sale de la zona lineal (1 = apagado)."],
+  busq:["Búsqueda al perder la línea","Si está apagada, el brazo se queda quieto."],
+  per:["Período del lazo (ms)","Cada cuánto se mide y se corrige (el servo se refresca cada 20 ms)."],
+  u0:["Centro u0 (°)","Salida con error cero. Con P puro, el error de régimen depende de la distancia de la línea a u0."],
+  vbusq:["Velocidad de búsqueda (°/s)",""], thold:["Espera antes de buscar (ms)",""],
+  amin:["Límite inferior (°)",""], amax:["Límite superior (°)",""],
+  trim:["Corrección del horn (°)","Se suma a todo lo enviado al servo del brazo, para que 90° sea el brazo derecho."],
+  pcen:["Servo de la línea en 0 (°)","Lo ajusta «Calibrar el perturbador» o «Fijar cero aquí»."],
+  prel:["Relación del engranaje","Grados del servo por grado de línea (236/32 = 7,375). Lo corrige la calibración."],
+  psig:["Sentido","Lo detecta la calibración del perturbador."],
+  plmax:["Recorrido de la línea (± °)",""], pvel:["Velocidad de la línea (°/s)","Para los movimientos manuales (0 = salto). Los ensayos no la usan."],
+  corr:["Modo","Sin igualar: misma escala para los dos (muestra el efecto de sensores distintos). Automática: cada uno entre su negro y su blanco. Manual: ganancia y offset a mano."],
+  gi:["Ganancia izquierdo",""], oi:["Offset izquierdo",""], gd:["Ganancia derecho",""], od:["Offset derecho",""],
+  tau:["Filtro de sensores (ms)","Más alto = menos ruido pero más retardo dentro del lazo."],
+  vison:["Umbral línea encontrada",""], visoff:["Umbral línea perdida",""],
+  ledi:["LED izquierdo (PWM D5)","Solo si el LED está en D5."], ledd:["LED derecho (PWM D6)","Solo si el LED está en D6."],
+  tdur:["Duración del registro (s)","Tiempo después de la perturbación."], tpre:["Registro previo (s)","Tiempo antes de la perturbación."],
+  vcal:["Velocidad de barrido (°/s)","Calibración del brazo; la de la línea va a la mitad."],
+  teldiv:["División de telemetría","Cada cuántos ciclos se envía un dato fuera de los ensayos."],
+};
+const ENUMS = { modo:[[1,"P"],[2,"PI"],[3,"PD"],[4,"PID"]], corr:[[0,"Sin igualar"],[1,"Automática"],[2,"Manual"]],
+  psig:[[1,"Normal"],[-1,"Invertido"]], dmed:[[0,"Sobre el error"],[1,"Sobre la medición"]] };
+const params = {};
+const pend = new Set();
+function paso(p){ if(p.tipo===1) return 1; const r=p.max-p.min; return r<=1.5?0.005:r<=6?0.01:r<=40?0.05:r<=200?0.5:1; }
+function decs(st){ return st<0.01?3:st<0.1?2:st<1?1:0; }
+function construir(n, slot){
+  const p=params[n]; if(!p) return;
+  const d=document.createElement("div"); d.className="param";
+  const [lab,ayuda]=INFO[n]||[n,""];
+  if(ENUMS[n]){
+    d.innerHTML=`<label>${lab}<code>${n}</code></label><span></span><div class="seg">${ENUMS[n].map(([v,t])=>`<button data-v="${v}">${t}</button>`).join("")}</div>${ayuda?`<p>${ayuda}</p>`:""}`;
+    d.querySelectorAll(".seg button").forEach(b=> b.onclick=()=> enviarParam(n, +b.dataset.v));
+  } else if(p.tipo===2){
+    d.innerHTML=`<label>${lab}<code>${n}</code></label><label class="sw"><input type="checkbox"><span></span></label>${ayuda?`<p>${ayuda}</p>`:""}`;
+    d.querySelector("input").onchange=e=> enviarParam(n, e.target.checked?1:0);
+  } else {
+    const st=paso(p);
+    d.innerHTML=`<label>${lab}<code>${n}</code></label><input type="number" min="${p.min}" max="${p.max}" step="${st}">
+      <input type="range" min="${p.min}" max="${p.max}" step="${st}">${ayuda?`<p>${ayuda}</p>`:""}`;
+    const num=d.querySelector("input[type=number]"), rng=d.querySelector("input[type=range]");
+    rng.addEventListener("input",()=>{ num.value=(+rng.value).toFixed(decs(st)); });
+    rng.addEventListener("change",()=> enviarParam(n, rng.value));
+    num.addEventListener("change",()=> enviarParam(n, num.value.replace(",", ".")));
+    p.st=st;
+  }
+  slot.innerHTML=""; slot.appendChild(d); p.el=d; mostrarParam(n);
+}
+function mostrarParam(n){
+  const p=params[n]; if(!p||!p.el) return;
+  const d=p.el;
+  if(ENUMS[n]) d.querySelectorAll(".seg button").forEach(b=> b.classList.toggle("act", +b.dataset.v===Math.round(p.v)));
+  else if(p.tipo===2) d.querySelector("input").checked = p.v>0.5;
+  else { d.querySelector("input[type=number]").value=(+p.v).toFixed(decs(p.st)); d.querySelector("input[type=range]").value=p.v; }
+}
+function enviarParam(n, v){
+  const p=params[n]; if(!p) return;
+  v=+v; if(!isFinite(v)) return;
+  if(Math.abs(v-p.v)<1e-9){ mostrarParam(n); return; }
+  p.el?.classList.remove("err"); p.el?.classList.add("pend"); pend.add(n);
+  send(`set ${n} ${+v.toFixed(4)}`);
+}
+function recibirParam(c){
+  const n=c[1], p=params[n]=Object.assign(params[n]||{}, {v:+c[2], min:+c[3], max:+c[4], tipo:+c[5]});
+  if(p.el){ p.el.classList.remove("pend","err"); mostrarParam(n); }
+  if(pend.has(n)){ pend.delete(n); setDirty(true); }
+  if(n==="corr") $("#manual").style.display = Math.round(p.v)===2 ? "" : "none";
+  if(n==="amin"||n==="amax"){ $("#rgGoto").min=params.amin?.v??60; $("#rgGoto").max=params.amax?.v??120; }
+  if(n==="plmax"){ const m=p.v; $("#rgLin").min=-m; $("#rgLin").max=m; }
+  avisosCorr(); ctrlResumen(); descEns();
+}
+function construirTodo(){ $$(".ps[data-p]").forEach(s=> construir(s.dataset.p, s)); $$(".grid .col .card").forEach(c=>{ const f=c.querySelector(".param"); f&&f.classList.add("first"); }); }
+
+/* ================================================================== gráficos */
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+class Grafico {
+  constructor(host, titulo, unidad, series, opts={}){
+    this.series=series; this.opts=opts; this.data=[];
+    const w=document.createElement("div");
+    w.innerHTML=`<div class="ctitle"><b>${titulo}</b><span>${unidad}</span></div>`+
+      (series.length>1?`<div class="legend">${series.map((s,i)=>`<span><i style="background:var(--series-${s.c||i+1})"></i>${s.label}</span>`).join("")}</div>`:"")+
+      `<div class="chart${opts.alto?" alto":""}"><canvas></canvas><div class="tip"></div></div>`;
+    (typeof host==="string"?$(host):host).appendChild(w);
+    this.leg=w.querySelector(".legend");
+    this.cv=w.querySelector("canvas"); this.tip=w.querySelector(".tip"); this.hx=null;
+    this.cv.addEventListener("mousemove",e=>{ const r=this.cv.getBoundingClientRect(); this.hx=e.clientX-r.left; this.dibujar(); });
+    this.cv.addEventListener("mouseleave",()=>{ this.hx=null; this.tip.style.display="none"; this.dibujar(); });
+    GRAFS.push(this);
+  }
+  setSeries(series){ this.series=series; if(this.leg) this.leg.innerHTML=series.map((s,i)=>`<span><i style="background:var(--series-${s.c||i+1})"></i>${s.label}</span>`).join(""); }
+  limpiar(){ this.data=[]; sucio=true; }
+  agregar(x, vals, grupo){ this.data.push([x, vals, grupo]); if(this.data.length>8000) this.data.splice(0,2000); sucio=true; }
+  rangoX(){
+    if(this.opts.xFijo) return this.opts.xFijo();
+    if(this.opts.xAuto){ if(!this.data.length) return [0,1]; let a=Infinity,b=-Infinity; for(const d of this.data){a=Math.min(a,d[0]);b=Math.max(b,d[0]);} return [a, b>a?b:a+1]; }
+    const ult=this.data.length?this.data[this.data.length-1][0]:0; return [ult-ventana, ult];
+  }
+  dibujar(){
+    const cv=this.cv, dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+    if(!W) return;
+    if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); }
+    const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+    const L=46, R=8, T=8, B=22, pw=W-L-R, ph=H-T-B;
+    const [x0,x1]=this.rangoX();
+    const vis=this.data.filter(d=>d[0]>=x0 && d[0]<=x1);
+    let y0,y1;
+    if(this.opts.y){ [y0,y1]=this.opts.y; }
+    else{
+      y0=Infinity; y1=-Infinity;
+      for(const d of vis) for(const v of d[1]) if(isFinite(v)){ y0=Math.min(y0,v); y1=Math.max(y1,v); }
+      if(!isFinite(y0)){ y0=0; y1=1; }
+      const m=Math.max((y1-y0)*0.1, (this.opts.minSpan||0.5)/2); y0-=m; y1+=m;
+    }
+    const X=x=>L+(x-x0)/(x1-x0||1)*pw, Y=y=>T+(1-(y-y0)/(y1-y0||1))*ph;
+    g.font="11px system-ui,sans-serif"; g.fillStyle=css("--muted"); g.strokeStyle=css("--grid"); g.lineWidth=1;
+    for(const t of niceTicks(y0,y1,4)){ const y=Math.round(Y(t))+.5; g.beginPath(); g.moveTo(L,y); g.lineTo(W-R,y); g.stroke();
+      g.textAlign="right"; g.textBaseline="middle"; g.fillText(fmtTick(t), L-6, y); }
+    g.textAlign="center"; g.textBaseline="top";
+    for(const t of niceTicks(x0,x1,6)){ const x=X(t); if(x<L-1||x>W-R+1) continue; g.fillText(this.opts.xFmt?this.opts.xFmt(t,x1):fmtTick(t), x, T+ph+5); }
+    g.strokeStyle=css("--axis"); g.beginPath(); g.moveTo(L,T+ph+.5); g.lineTo(W-R,T+ph+.5); g.stroke();
+    if(this.opts.cero && y0<0 && y1>0){ g.setLineDash([3,3]); g.beginPath(); g.moveTo(L,Math.round(Y(0))+.5); g.lineTo(W-R,Math.round(Y(0))+.5); g.stroke(); g.setLineDash([]); }
+    if(this.opts.vx!==undefined && this.opts.vx>=x0 && this.opts.vx<=x1){ g.setLineDash([3,3]); g.beginPath(); g.moveTo(Math.round(X(this.opts.vx))+.5,T); g.lineTo(Math.round(X(this.opts.vx))+.5,T+ph); g.stroke(); g.setLineDash([]); }
+    g.save(); g.beginPath(); g.rect(L,T,pw,ph); g.clip();
+    const src=(this.opts.xFijo||this.opts.xAuto)?this.data:vis;
+    this.series.forEach((s,i)=>{
+      g.strokeStyle=css(`--series-${s.c||i+1}`); g.lineWidth=2; g.lineJoin="round"; if(s.dash) g.setLineDash([5,4]); g.beginPath();
+      let pen=false, prevG;
+      for(const d of src){
+        const v=d[1][i]; if(!isFinite(v)){ pen=false; continue; }
+        if(d[2]!==undefined && d[2]!==prevG) pen=false; prevG=d[2];
+        const x=X(d[0]), y=Y(v);
+        if(pen) g.lineTo(x,y); else { g.moveTo(x,y); pen=true; }
+      }
+      g.stroke(); g.setLineDash([]);
+    });
+    g.restore();
+    if(this.hx!==null && this.hx>=L && src.length){
+      const xv=x0+(this.hx-L)/pw*(x1-x0);
+      let best=null, bd=Infinity;
+      for(const d of src){ const dd=Math.abs(d[0]-xv); if(dd<bd){bd=dd;best=d;} }
+      if(best){
+        const x=X(best[0]);
+        g.strokeStyle=css("--axis"); g.beginPath(); g.moveTo(Math.round(x)+.5,T); g.lineTo(Math.round(x)+.5,T+ph); g.stroke();
+        this.series.forEach((s,i)=>{ const v=best[1][i]; if(!isFinite(v)) return;
+          g.fillStyle=css(`--series-${s.c||i+1}`); g.strokeStyle=css("--surface"); g.lineWidth=2;
+          g.beginPath(); g.arc(x,Y(v),4,0,7); g.fill(); g.stroke(); });
+        const xl=this.opts.xFmt?this.opts.xFmt(best[0],x1,true):best[0].toFixed(2);
+        this.tip.innerHTML=`<div style="color:var(--ink-2)">${xl}</div>`+this.series.map((s,i)=>
+          `<div><i style="background:var(--series-${s.c||i+1})"></i>${s.label}: <b>${fx(best[1][i], s.dec??2)}</b></div>`).join("");
+        this.tip.style.display="block";
+        const tw=this.tip.offsetWidth; this.tip.style.left=Math.min(Math.max(x+12,0), W-tw-4)+"px"; this.tip.style.top="6px";
+      }
+    }
+  }
+}
+function niceTicks(a,b,n){
+  const span=b-a; if(!(span>0)) return [a];
+  const s0=span/n, mag=Math.pow(10,Math.floor(Math.log10(s0))), r=s0/mag, st=(r<1.5?1:r<3?2:r<7?5:10)*mag, out=[];
+  for(let t=Math.ceil(a/st)*st; t<=b+1e-9; t+=st) out.push(+t.toFixed(10));
+  return out;
+}
+function fmtTick(t){ const a=Math.abs(t); return a>=10?t.toFixed(0):a>=1?t.toFixed(1).replace(/\.0$/,""):t.toFixed(2).replace(/0$/,""); }
+const GRAFS=[]; let ventana=20, sucio=true;
+const tFmt=(t,tf,tip)=> tip?`t = ${t.toFixed(2)} s`:(Math.abs(t-tf)<1e-6?"ahora":`${(t-tf).toFixed(0)} s`);
+const sFmt=(t,_,tip)=> tip?`t = ${t.toFixed(3)} s`:`${fmtTick(t)} s`;
+const gFmt=(t,_,tip)=> tip?`${t.toFixed(2)}°`:`${t.toFixed(0)}°`;
+
+const gRaw=new Grafico("#cRaw","Crudo del ADC","0 – 1023",[{label:"izquierdo",dec:0},{label:"derecho",dec:0}],{xFmt:tFmt,minSpan:20});
+const gCorr=new Grafico("#cCorr","Brillo corregido","0 = negro · 1 = blanco",[{label:"izquierdo",dec:3},{label:"derecho",dec:3}],{xFmt:tFmt,y:[-0.05,1.05]});
+let rangoBrazo=[60,120], rangoLin=[-12,12];
+const gA=new Grafico("#cA","Pasada A: crudo según el ángulo del brazo","0 – 1023",[{label:"izquierdo",dec:0},{label:"derecho",dec:0}],{xFijo:()=>rangoBrazo,xFmt:gFmt,minSpan:20});
+const gS=new Grafico("#cS","Curva s según el ángulo del brazo (pasadas B y C)","−1 … 1",[{label:"bajando",dec:3},{label:"subiendo",dec:3}],{xFijo:()=>rangoBrazo,xFmt:gFmt,y:[-1.1,1.1],cero:true});
+const gSL=new Grafico("#cSL","Curva s según la posición de la línea (perturbador)","−1 … 1",[{label:"subiendo",dec:3},{label:"bajando",dec:3}],{xFijo:()=>rangoLin,xFmt:gFmt,y:[-1.1,1.1],cero:true});
+const gPlanta=new Grafico("#cPlanta","Brazo y línea","grados",[{label:"pedido (u)"},{label:"enviado al servo"},{label:"línea L + 90",c:3}],{xFmt:tFmt,minSpan:2,alto:true});
+const gErr=new Grafico("#cErr","Error e = ref − p","grados",[{label:"error"}],{xFmt:tFmt,cero:true,minSpan:1});
+const gPID=new Grafico("#cPID","Términos del PID","grados",[{label:"P"},{label:"I"},{label:"D"}],{xFmt:tFmt,cero:true,minSpan:1});
+const gU=new Grafico("#cU","Salida y servo","grados",[{label:"salida u"},{label:"enviado al servo"}],{xFmt:tFmt,minSpan:2});
+const gER=new Grafico("#cER","Respuesta","grados",[{label:"seguido"},{label:"objetivo",dash:true}],{xAuto:true,xFmt:sFmt,minSpan:1,alto:true});
+const gEE=new Grafico("#cEE","Error medido","grados",[{label:"error"}],{xAuto:true,xFmt:sFmt,cero:true,minSpan:0.5});
+const gEP=new Grafico("#cEP","Términos del PID","grados",[{label:"P"},{label:"I"},{label:"D"}],{xAuto:true,xFmt:sFmt,cero:true,minSpan:0.5});
+const gComp=new Grafico("#cComp","Respuesta","grados",[],{xAuto:true,xFmt:sFmt,minSpan:1,alto:true});
+const gCompE=new Grafico("#cCompE","Error medido","grados",[],{xAuto:true,xFmt:sFmt,cero:true,minSpan:0.5});
+function bucle(){ if(sucio){ GRAFS.forEach(g=>{ if(g.cv.offsetParent) g.dibujar(); }); sucio=false; } requestAnimationFrame(bucle); }
+requestAnimationFrame(bucle);
+window.addEventListener("resize",()=>{ sucio=true; });
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{ sucio=true; });
+
+/* ================================================================== pestañas */
+$$("#tabs button").forEach(b=> b.onclick=()=>{
+  $$("#tabs button").forEach(x=>x.classList.toggle("act",x===b));
+  $$(".tab").forEach(t=>t.classList.toggle("act", t.id==="tab-"+b.dataset.tab));
+  tryLS(()=>localStorage.setItem("bancoPID.tab", b.dataset.tab));
+  sucio=true;
+});
+{ const t=tryLS(()=>localStorage.getItem("bancoPID.tab")); if(t) $(`#tabs button[data-tab="${t}"]`)?.click(); }
+
+/* ================================================================== estado general */
+let estado="—", cal={}, dirty=false, t0ms=null, ultSeq=null, perdidas=0, tel=null;
+function setEstado(st){ estado=st; $("#tEst").textContent=st; $("#bEst").className="badge est-"+st; }
+function setDirty(d){ dirty=d; $("#bDirty").style.display=d?"":"none"; }
+function siNo(el, v){ el.textContent=v?"sí":"no"; el.className=v?"ok-si":"ok-no"; }
+function zonaLineal(){ const k=Math.abs(cal.pend||0); return k>0 ? 0.9/k : null; }
+
+function T(c){
+  // T,seq,ms,estado,rawI,rawD,cI,cD,s,p,ref,e,P,I,D,u,th,L
+  const seq=+c[1], ms=+c[2], st=c[3];
+  const per=params.per?.v||20, minDiv=Math.ceil(20/per), esp=(st==="ENSAYO")?minDiv:Math.max(minDiv, params.teldiv?.v||2);
+  if(ultSeq!==null){ const gap=(seq-ultSeq+65536)%65536; if(gap>esp*1.5 && gap<1000) perdidas+=Math.round(gap/esp)-1; }
+  ultSeq=seq; if(t0ms===null) t0ms=ms;
+  const t=(ms-t0ms)/1000;
+  const d={seq, ms, st, rI:+c[4], rD:+c[5], cI:+c[6], cD:+c[7], s:+c[8], p:+c[9], ref:+c[10], e:+c[11], P:+c[12], I:+c[13], D:+c[14], u:+c[15], th:+c[16], L:+c[17]};
+  tel=d;
+  const lazo=(st==="SIGUE"||st==="ENSAYO");
+  gRaw.agregar(t,[d.rI,d.rD]); gCorr.agregar(t,[d.cI,d.cD]);
+  gPlanta.agregar(t,[d.u,d.th,d.L+90]);
+  gErr.agregar(t,[lazo?d.e:NaN]); gPID.agregar(t, lazo?[d.P,d.I,d.D]:[NaN,NaN,NaN]); gU.agregar(t,[lazo?d.u:NaN, d.th]);
+  if(st!==estado) setEstado(st);
+  if(ensActual) muestraEnsayo(d);
+  if(!vivoPend){ vivoPend=true; requestAnimationFrame(vivo); }
+}
+let vivoPend=false;
+function vivo(){
+  vivoPend=false; const d=tel; if(!d) return;
+  const lazo=(d.st==="SIGUE"||d.st==="ENSAYO");
+  $("#vTh").textContent=fx(d.th,1); $("#vL").textContent=fx(d.L,2); $("#vS").textContent=fx(d.s,2);
+  $("#vP").textContent=fx(d.p,2); $("#vE").textContent=lazo?fx(d.e,2):"—"; $("#vU").textContent=lazo?fx(d.u,1):"—";
+  $("#vR").textContent=`${d.rI} / ${d.rD}`; $("#vC").textContent=`${fx(d.cI,2)} / ${fx(d.cD,2)}`;
+  $("#tLost").textContent=perdidas;
+  medidor("#mI",d.rI); medidor("#mD",d.rD); $("#nI").textContent=d.rI; $("#nD").textContent=d.rD;
+  if(params.corr && Math.round(params.corr.v)===2){
+    $("#vMI").textContent=fx(d.rI*(params.gi?.v??1)+(params.oi?.v??0),0)+"  →  "+fx(d.cI,3);
+    $("#vMD").textContent=fx(d.rD*(params.gd?.v??1)+(params.od?.v??0),0)+"  →  "+fx(d.cD,3);
+  }
+  const av=[];
+  if(d.rI>1000||d.rD>1000) av.push(["mal",`Sensor ${d.rI>1000?"izquierdo":"derecho"} saturado (más de 1000): bajar su resistencia o el brillo de su LED.`]);
+  $("#avisoSens").innerHTML=av.map(([c,t])=>`<div class="aviso ${c}">${t}</div>`).join("");
+}
+function medidor(sel, raw){
+  const m=$(sel); m.querySelector("i").style.width=(raw/1023*100)+"%";
+  const rB = sel==="#mI"? cal.rawBI : cal.rawBD, rN = sel==="#mI"? cal.rawNI : cal.rawND;
+  const mx=m.querySelector(".mx"), mn=m.querySelector(".mn");
+  mx.style.display=rB?"":"none"; mn.style.display=rN?"":"none";
+  if(rB) mx.style.left=(rB/1023*100)+"%"; if(rN) mn.style.left=(rN/1023*100)+"%";
+}
+
+/* ================================================================== calibración y diagnóstico */
+const gToRaw = g => 1023.5*g/(1+g);
+function K(c){
+  cal=Object.assign(cal,{calOk:+c[1], calModo:+c[2], fBI:+c[3], fNI:+c[4], fBD:+c[5], fND:+c[6], rawMin:+c[7], rawMax:+c[8],
+    pend:+c[9], thLinea:+c[10], calpOk:+c[11], pendL:+c[12]});
+  cal.rawBI=gToRaw(cal.fBI); cal.rawNI=gToRaw(cal.fNI); cal.rawBD=gToRaw(cal.fBD); cal.rawND=gToRaw(cal.fND);
+  siNo($("#tCal"), cal.calOk); siNo($("#tCalp"), cal.calpOk);
+  mostrarDiag(); avisosCorr(); descEns();
+}
+let diag={};
+function mostrarDiag(){
+  const kv=[];
+  kv.push(["Brazo", cal.calOk?"calibrado":"sin calibrar"]);
+  if(diag.msg) kv.push(["Último resultado", diag.msg]);
+  if(diag.cI!==undefined){
+    kv.push(["Contraste izq / der", `${fx(diag.cI,1)}× / ${fx(diag.cD,1)}×`]);
+    kv.push(["Crudo en blanco izq / der", `${fx(diag.bI,0)} / ${fx(diag.bD,0)}`]);
+    kv.push(["Negro máximo en", `izq ${fx(diag.aI,1)}° · der ${fx(diag.aD,1)}°`]);
+    kv.push(["Desfase entre LDR", `${fx(diag.desf,1)}°`]);
+  }
+  if(cal.calOk){
+    kv.push(["Centro de la línea", fx(cal.thLinea,2)+"°"]);
+    kv.push(["Pendiente", fx(cal.pend,3)+" por grado"]);
+    const zl=zonaLineal(); if(zl) kv.push(["Zona lineal", "±"+fx(zl,1)+"°"]);
+  }
+  if(diag.ret!==undefined) kv.push(["Retardo medido", fx(diag.ret,2)+"°"]);
+  kv.push(["Perturbador", cal.calpOk?"calibrado":"sin calibrar"]);
+  if(diag.cp) kv.push(["Relación medida / sentido", `${diag.cp.ratio} · ${diag.cp.inv?"se invirtió":"sin cambio"}`]);
+  if(params.prel) kv.push(["Engranaje", `${fx(params.prel.v,3)} : 1 · servo en ${fx(params.pcen?.v,1)}° = línea 0`]);
+  $("#diag").innerHTML=kv.map(([a,b])=>`<span>${a}</span><span>${b}</span>`).join("");
+  const av=[];
+  if(diag.cI!==undefined){
+    if(diag.bI>1000||diag.bD>1000) av.push(["mal",`El ${diag.bI>1000?"izquierdo":"derecho"} llega a ${fx(Math.max(diag.bI,diag.bD),0)} en blanco: está saturado. Bajar su resistencia (a la mitad) o el brillo de su LED.`]);
+    if(Math.min(diag.cI,diag.cD)<2) av.push(["","Contraste menor que 2×: falta luz o la cinta no es bien negra/mate."]);
+    if(Math.abs(diag.desf)<5) av.push(["mal","Los dos LDR ven la línea casi en el mismo ángulo. La cinta tiene que apuntar al eje del servo (alineada con el brazo en 90°)."]);
+    else av.push(["bien",`Desfase de ${fx(Math.abs(diag.desf),1)}° entre los dos LDR: la curva s queda bien formada.`]);
+  }
+  zlTxt();
+  $("#avisoDiag").innerHTML=av.map(([c,t])=>`<div class="aviso ${c}">${t}</div>`).join("");
+}
+function zlTxt(){ const zl=zonaLineal(); $("#zl1").textContent= zl? "±"+fx(zl,1)+"°" : "calibrar primero"; }
+function avisosCorr(){
+  const av=[];
+  if(params.corr && cal.calOk && Math.round(params.corr.v)!==cal.calModo) av.push(["","La calibración se hizo con otro modo de corrección: la pendiente puede no valer. Volvé a calibrar con el brazo."]);
+  $("#avisoCorr").innerHTML=av.map(([c,t])=>`<div class="aviso ${c}">${t}</div>`).join("");
+}
+$("#btnIgualar").onclick=()=>{
+  if(!cal.calOk){ toast("Primero calibrá con el brazo.", true); return; }
+  // los dos canales quedan con el mismo negro y blanco: el de mayor rango manda
+  const ref=[Math.min(cal.rawNI,cal.rawND), Math.max(cal.rawBI,cal.rawBD)];
+  const g=(n,b)=> (ref[1]-ref[0])/Math.max(1,(b-n)), o=(n,b)=> ref[0]-n*g(n,b);
+  const gi=g(cal.rawNI,cal.rawBI), gd=g(cal.rawND,cal.rawBD);
+  const lim=v=>Math.min(5,Math.max(0.2,v));
+  enviarParam("gi", lim(gi).toFixed(3)); enviarParam("oi", o(cal.rawNI,cal.rawBI).toFixed(0));
+  enviarParam("gd", lim(gd).toFixed(3)); enviarParam("od", o(cal.rawND,cal.rawBD).toFixed(0));
+};
+
+/* ================================================================== servo y línea */
+const sync=(r,n)=>{ $(r).oninput=()=>{ $(n).value=$(r).value; }; $(n).oninput=()=>{ $(r).value=$(n).value; }; };
+sync("#rgGoto","#inGoto"); sync("#rgLin","#inLin");
+$("#rgGoto").onchange=()=> send("goto "+$("#rgGoto").value);
+$("#btnGoto").onclick=()=> send("goto "+(+$("#inGoto").value));
+$("#rgLin").onchange=()=> send("lin "+$("#rgLin").value);
+$("#btnLin").onclick=()=> send("lin "+(+$("#inLin").value));
+$("#btnALinea").onclick=()=>{ if(!cal.calOk){ toast("Primero calibrá con el brazo.",true); return; } send("goto "+(cal.thLinea+(tel?tel.L:0)).toFixed(1)); };
+$("#btnSesc").onclick=()=>{ selTipo="sesc"; ejecutar(+$("#inSesc").value); };
+
+/* ================================================================== presets */
+const PRE_BASE=[
+  {nombre:"Fábrica (PI suave)", v:{modo:2,kp:0.4,ki:6,kd:0,aw:1,lvel:1,zm:0.2,ksat:3}},
+  {nombre:"P puro (muestra el error de régimen)", v:{modo:1,kp:1,ki:0,kd:0,aw:1,lvel:1,zm:0.2,ksat:1}},
+  {nombre:"PI agresivo", v:{modo:2,kp:0.6,ki:10,kd:0,aw:1,lvel:1,zm:0.2,ksat:3}},
+  {nombre:"PID con D sobre la medición", v:{modo:4,kp:0.5,ki:6,kd:0.02,kdf:40,dmed:1,aw:1,lvel:1,zm:0.2}},
+  {nombre:"PI sin mejoras (sin anti-windup ni límites)", v:{modo:2,kp:0.4,ki:6,kd:0,aw:0,lvel:0,zm:0,ksat:1}},
+];
+const PRE_KEYS=["modo","kp","ki","kd","kdf","dmed","aw","lvel","vmax","zm","ksat","per","u0","tau","corr"];
+function presets(){ return PRE_BASE.concat(tryLS(()=>JSON.parse(localStorage.getItem("bancoPID.presets")||"[]"),[])); }
+function listarPre(){
+  const ps=presets(); $("#selPre").innerHTML=ps.map((p,i)=>`<option value="${i}">${p.nombre}${i<PRE_BASE.length?"":" (tuyo)"}</option>`).join("");
+  descPre();
+}
+function descPre(){ const p=presets()[+$("#selPre").value]; $("#preDesc").textContent=p?Object.entries(p.v).map(([k,v])=>`${k}=${v}`).join(" · "):""; }
+$("#selPre").onchange=descPre;
+$("#btnPreAp").onclick=()=>{ const p=presets()[+$("#selPre").value]; if(!p) return; for(const [k,v] of Object.entries(p.v)) if(params[k]) enviarParam(k,v); };
+$("#btnPreSv").onclick=()=>{
+  const nombre=$("#inPre").value.trim(); if(!nombre){ toast("Poné un nombre para el preset.",true); return; }
+  if(!params.kp){ toast("Conectá la placa para leer los valores actuales.",true); return; }
+  const v={}; PRE_KEYS.forEach(k=>{ if(params[k]) v[k]=+params[k].v.toFixed(4); });
+  const mios=tryLS(()=>JSON.parse(localStorage.getItem("bancoPID.presets")||"[]"),[]).filter(p=>p.nombre!==nombre);
+  mios.push({nombre,v}); tryLS(()=>localStorage.setItem("bancoPID.presets",JSON.stringify(mios)));
+  listarPre(); $("#selPre").value=presets().findIndex(p=>p.nombre===nombre); descPre(); toast("Preset guardado en esta computadora.");
+};
+$("#btnPreDel").onclick=()=>{
+  const i=+$("#selPre").value; if(i<PRE_BASE.length){ toast("Los presets de fábrica no se borran.",true); return; }
+  const nombre=presets()[i].nombre;
+  const mios=tryLS(()=>JSON.parse(localStorage.getItem("bancoPID.presets")||"[]"),[]).filter(p=>p.nombre!==nombre);
+  tryLS(()=>localStorage.setItem("bancoPID.presets",JSON.stringify(mios))); listarPre();
+};
+listarPre();
+function ctrlResumen(){
+  const m=params.modo?["","P","PI","PD","PID"][Math.round(params.modo.v)]:"—";
+  const kv=[["Tipo",m],["Kp / Ki / Kd", `${fx(params.kp?.v,3)} / ${fx(params.ki?.v,2)} / ${fx(params.kd?.v,3)}`],
+    ["Anti-windup", params.aw?(params.aw.v>0.5?"sí":"no"):"—"], ["Límite de velocidad", params.lvel?(params.lvel.v>0.5?`${fx(params.vmax?.v,0)} °/s`:"no"):"—"],
+    ["Zona muerta", params.zm?fx(params.zm.v,2)+"°":"—"], ["Corrección LDR", params.corr?ENUMS.corr.find(e=>e[0]===Math.round(params.corr.v))?.[1]:"—"]];
+  $("#ctrlRes").innerHTML=kv.map(([a,b])=>`<span>${a}</span><span>${b}</span>`).join("");
+}
+
+/* ================================================================== ensayos */
+const TIPOS={
+  pesc:{n:0,t:"Escalón de perturbación",d:"La línea salta A grados de golpe; el control la alcanza.",A:2,p2:null,
+        desc:"Mide cómo rechaza una perturbación: recuperación, sobrepaso, establecimiento y error final."},
+  resc:{n:1,t:"Escalón de referencia",d:"Se pide que el brazo quede A grados corrido de la línea.",A:0.8,p2:null,
+        desc:"Respuesta al cambio de consigna. Usar A dentro de la zona lineal de los LDR."},
+  pram:{n:3,t:"Rampa",d:"La línea se mueve a velocidad constante.",A:6,p2:2,p2l:"velocidad (°/s)",
+        desc:"El error medio durante la rampa muestra el atraso del control frente a una línea en movimiento."},
+  psen:{n:4,t:"Senoidal",d:"La línea oscila: A·sen(2πft), 5 ciclos.",A:2,p2:0.5,p2l:"frecuencia (Hz)",
+        desc:"Ganancia (amplitud seguida / amplitud de la línea) y fase: un punto del diagrama de Bode."},
+  sesc:{n:2,t:"Servo (lazo abierto)",d:"Escalón del servo del brazo, sin control.",A:1,p2:null,
+        desc:"Identifica la planta: retardo, velocidad, juego. Empezar con el brazo sobre la línea."},
+};
+let selTipo=tryLS(()=>localStorage.getItem("bancoPID.tipo"))||"pesc";
+if(!TIPOS[selTipo]) selTipo="pesc";
+function dibujarTipos(){
+  $("#tests").innerHTML=Object.entries(TIPOS).map(([k,v])=>`<div class="test${k===selTipo?" act":""}" data-k="${k}"><b>${v.t}</b><span>${v.d}</span></div>`).join("");
+  $$("#tests .test").forEach(e=> e.onclick=()=>{ selTipo=e.dataset.k; tryLS(()=>localStorage.setItem("bancoPID.tipo",selTipo)); dibujarTipos(); });
+  const v=TIPOS[selTipo];
+  $("#ensIn").innerHTML=`<label>Amplitud A <input type="number" id="inA" value="${v.A}" step="0.1"> °</label>`+
+    (v.p2!==null?`<label>${v.p2l} <input type="number" id="inP2" value="${v.p2}" step="0.05"></label>`:"");
+  descEns();
+}
+function descEns(){
+  const v=TIPOS[selTipo]; if(!v) return;
+  $("#ensDesc").textContent=v.desc;
+  const zl=zonaLineal(), av=[];
+  if(!cal.calOk) av.push(["mal","Falta calibrar con el brazo (pestaña Sensores)."]);
+  else if(selTipo!=="sesc" && !cal.calpOk && selTipo!=="resc") av.push(["","El perturbador no está calibrado: la amplitud de la línea puede no ser exacta."]);
+  if(zl) av.push(["", `Zona lineal de los LDR: ±${fx(zl,1)}°. Con amplitudes mayores el error medido se satura y las métricas son aproximadas.`]);
+  $("#avisoEns").innerHTML=av.map(([c,t])=>`<div class="aviso ${c}">${t}</div>`).join("");
+}
+dibujarTipos();
+$("#btnEns").onclick=()=> ejecutar(+(($("#inA")||{}).value), +(($("#inP2")||{}).value));
+function esperarEstado(ok, ms){ return new Promise(res=>{ const t0=performance.now(); const f=()=>{ if(ok(estado)) res(true); else if(performance.now()-t0>ms) res(false); else setTimeout(f,60); }; f(); }); }
+async function ejecutar(A, p2){
+  const v=TIPOS[selTipo];
+  if(!isFinite(A)||Math.abs(A)<0.2){ toast("La amplitud debe ser al menos 0,2°.",true); return; }
+  if(demo){ toast("En la demo los ensayos ya están grabados.",true); return; }
+  if(!cal.calOk){ toast("Primero calibrá con el brazo.",true); return; }
+  const orden=`ens ${selTipo} ${A}`+(v.p2!==null?` ${p2}`:"");
+  if(selTipo==="sesc"){
+    if(estado!=="REPOSO"&&estado!=="MANUAL"){ send("stop"); await esperarEstado(s=>s==="REPOSO",1500); }
+  } else if(estado!=="SIGUE"){
+    $("#ensMsg").textContent="arrancando el control…"; send("run");
+    const ok=await esperarEstado(s=>s==="SIGUE",4000);
+    if(!ok){ $("#ensMsg").textContent=""; toast("El control no pudo enganchar la línea.",true); return; }
+    await new Promise(r=>setTimeout(r,1500));
+  }
+  $("#ensMsg").textContent="ensayando…"; send(orden);
+}
+let ensActual=null;
+function E(c){
+  if(c[1]==="inicio"){
+    const t=+c[2], nombre=Object.keys(TIPOS).find(k=>TIPOS[k].n===t);
+    ensActual={id:Date.now(), fecha:new Date().toLocaleString("es"), tipo:nombre, A:+c[3], p2:+c[4], pre:+c[5], dur:+c[6],
+      modo:+c[7], kp:+c[8], ki:+c[9], kd:+c[10], flags:c[11], zm:+c[12], per:+c[13], k:cal.pend, mu:[], msDisp:null, seqDisp:null};
+    gER.limpiar(); gEE.limpiar(); gEP.limpiar();
+    $("#ensMsg").textContent=`ensayando: ${TIPOS[nombre].t}…`;
+  } else if(c[1]==="disparo" && ensActual){
+    ensActual.seqDisp=+c[2]; ensActual.L0=+c[3]; ensActual.ref0=+c[4]; ensActual.th0=+c[5]; ensActual.p0=+c[6];
+  } else if(c[1]==="fin" && ensActual){
+    terminarEnsayo(false);
+  }
+}
+function muestraEnsayo(d){
+  const r=ensActual;
+  if(d.st!=="ENSAYO") return;
+  if(r.seqDisp!==null && r.msDisp===null){ const x=r.mu.find(m=>m.seq===r.seqDisp); r.msDisp = x? x.ms : d.ms; }
+  r.mu.push({seq:d.seq, ms:d.ms, p:d.p, L:d.L, ref:d.ref, e:d.e, P:d.P, I:d.I, D:d.D, u:d.u, th:d.th});
+  if(r.msDisp!==null){
+    const t=(d.ms-r.msDisp)/1000, [y,obj]=seguido(r, d);
+    gER.agregar(t,[y,obj]); gEE.agregar(t,[d.ref-d.p]); gEP.agregar(t,[d.P,d.I,d.D]);
+  }
+}
+// variable "seguida" de cada ensayo y su objetivo (grados)
+function seguido(r, m){
+  if(r.tipo==="pesc"||r.tipo==="pram"||r.tipo==="psen") return [m.p + (m.L - r.L0), m.L - r.L0 + (r.p0??0)];   // brazo respecto de la línea inicial
+  if(r.tipo==="resc") return [m.p, (r.p0??0) + (m.ref - r.ref0)];
+  return [m.p, (r.p0??0) + r.A];                                                                       // sesc
+}
+function terminarEnsayo(abortado){
+  const r=ensActual; ensActual=null; $("#ensMsg").textContent="";
+  if(abortado||!r||r.msDisp===null){ if(r) toast("El ensayo se interrumpió (línea perdida o STOP).",true); return; }
+  r.mu.forEach(m=> m.t=+((m.ms-r.msDisp)/1000).toFixed(3));
+  r.met=metricas(r);
+  guardarRes(r); mostrarMetricas(r, "#metsUlt"); dibujarRes();
+}
+function metricas(r){
+  const A=r.A, sg=Math.sign(A), aA=Math.abs(A), band=Math.max(0.05*aA,0.25), k=Math.abs(r.k||0);
+  const post=r.mu.filter(m=>m.t>=0), dur=post.length?post[post.length-1].t:0;
+  const M={tipo:r.tipo, aprox: (r.tipo==="pesc"||r.tipo==="resc") && k>0 && aA*k>0.9};
+  // escalones de referencia y del servo: subida, sobrepaso y establecimiento respecto del valor final alcanzado
+  let pFin=null;
+  if(r.tipo==="resc"||r.tipo==="sesc"){ const ult=post.filter(m=>m.t>=0.75*dur); pFin=ult.length?ult.reduce((a,m)=>a+m.p,0)/ult.length:null; }
+  const desp=(pFin!==null)?pFin-(r.p0??0):A;
+  let iae=0, ise=0, emax=0, fin=0, nf=0, tEst=0, t10=null, t90=null, pico=0, osc=0, sPrev=0, visto=false;
+  let sS=0, sC=0, nS=0, sumR=0, nR=0;
+  for(let i=0;i<post.length;i++){
+    const m=post[i], dt=i? m.t-post[i-1].t : 0;
+    let err, r01=null, dev=null;
+    if(r.tipo==="pesc"){
+      err=m.ref-m.p; const lim=Math.min(0.5*aA, k?0.5/k:0.5*aA);
+      if(!visto && err*sg>=lim) visto=true;
+      r01=visto? 1-err*sg/aA : 0; dev=-err*sg;
+    } else if(r.tipo==="resc"||r.tipo==="sesc"){
+      const obj=(r.p0??0)+A; err=obj-m.p;
+      const sd=Math.sign(desp)||sg, ad=Math.abs(desp)||aA;
+      r01=(m.p-(r.p0??0))*sd/ad; dev=(m.p-pFin)*sd/ad*aA;
+    } else {
+      err=m.ref-m.p;
+      if(r.tipo==="pram" && m.t>0.5 && Math.abs(r.p2*m.t)<aA){ sumR+=err; nR++; }
+      if(r.tipo==="psen" && m.t>=1/r.p2 && m.t<=5/r.p2){ const w=2*Math.PI*r.p2*m.t, x=m.p+(m.L-r.L0)-(r.p0??0); sS+=x*Math.sin(w); sC+=x*Math.cos(w); nS++; }
+    }
+    if(r01!==null){
+      if(t10===null && r01>=0.1) t10=m.t; if(t90===null && r01>=0.9) t90=m.t;
+      if(t90!==null && dev>pico) pico=dev;
+      const s=Math.sign(dev); if(t90!==null && Math.abs(dev)>band){ if(sPrev && s!==sPrev) osc++; sPrev=s; }
+    }
+    if((pFin!==null? Math.abs(m.p-pFin) : Math.abs(err))>band) tEst=m.t;
+    iae+=Math.abs(err)*dt; ise+=err*err*dt; emax=Math.max(emax,Math.abs(err));
+    if(m.t>=0.75*dur){ fin+=err; nf++; }
+  }
+  Object.assign(M,{iae, ise, emax, efin: nf?fin/nf:0, tEst, osc});
+  if(r.tipo==="pesc"||r.tipo==="resc"||r.tipo==="sesc"){ M.sub=(t10!==null&&t90!==null)?t90-t10:null; M.sobre=pico/aA*100; }
+  if(r.tipo==="pram") M.eRampa=nR?sumR/nR:0;
+  if((r.tipo==="pram"||r.tipo==="psen") && k>0 && emax*k>0.9) M.aprox=true;
+  if(pFin!==null) M.alcanzado=desp;
+  if(r.tipo==="psen"){ delete M.tEst; delete M.efin; }
+  if(r.tipo==="psen"){ M.gan=nS?2*Math.hypot(sS,sC)/nS/aA:null; M.fase=Math.atan2(sC,sS)*180/Math.PI; }
+  return M;
+}
+const MET_DEF=[
+  ["sub", r=>r.tipo==="pesc"?"Recuperación 10→90 %":"Subida 10→90 %", "s",3],
+  ["sobre","Sobrepaso","%",0], ["tEst","Establecimiento","s",2], ["alcanzado","Movimiento logrado","°",2], ["efin","Error final","°",2],
+  ["eRampa","Error medio en la rampa","°",2], ["gan","Ganancia","",3], ["fase","Fase","°",1],
+  ["emax","Error máximo","°",2], ["iae","IAE","°·s",3], ["ise","ISE","°²·s",3], ["osc","Oscilaciones","",0],
+];
+function mostrarMetricas(r, sel){
+  const M=r.met;
+  const head=`<p class="note" style="margin:0 0 8px">${TIPOS[r.tipo].t} · A = ${r.A}°${r.tipo==="pram"?` · ${r.p2} °/s`:""}${r.tipo==="psen"?` · ${r.p2} Hz`:""} · ${["","P","PI","PD","PID"][r.modo]} Kp ${r.kp} Ki ${r.ki} Kd ${r.kd}</p>`;
+  const cells=MET_DEF.filter(([k])=>M[k]!==undefined).map(([k,l,u,d])=>`<div class="met"><div class="l">${typeof l==="function"?l(r):l}</div><div class="v">${M[k]===null?"—":fx(M[k],d)}<span class="u">${u}</span></div></div>`).join("");
+  $(sel).innerHTML=head+`<div class="mets">${cells}</div>`+(M.aprox?`<div class="aviso">Amplitud mayor que la zona lineal: el error medido se satura y las métricas son aproximadas.</div>`:"")+
+    (r.tipo==="sesc"?`<p class="note">A lazo abierto, si el error final no llega a 0 es el juego del servo y su zona muerta.</p>`:"");
+}
+
+/* ================================================================== resultados */
+let resultados=tryLS(()=>JSON.parse(localStorage.getItem("bancoPID.resultados")||"[]"),[]);
+const marcados=new Set();
+function guardarRes(r){
+  const comp={...r, mu:r.mu.map(m=>[m.t,+m.p.toFixed(3),+m.L.toFixed(3),+m.ref.toFixed(3),+m.e.toFixed(3),+m.P.toFixed(3),+m.I.toFixed(3),+m.D.toFixed(3),+m.u.toFixed(3),+m.th.toFixed(3)])};
+  resultados.push(comp); while(resultados.length>40) resultados.shift();
+  persistir(); marcados.add(r.id); while(marcados.size>4) marcados.delete([...marcados][0]);
+}
+function persistir(){ if(!tryLS(()=>{ localStorage.setItem("bancoPID.resultados",JSON.stringify(resultados)); return true; },false) && resultados.length>5){ resultados.splice(0,5); persistir(); } }
+const muObj = a => ({t:a[0],p:a[1],L:a[2],ref:a[3],e:a[4],P:a[5],I:a[6],D:a[7],u:a[8],th:a[9]});
+function dibujarRes(){
+  const cols=[["sub","subida","s",3],["sobre","sobrepaso %","",0],["tEst","establec.","s",2],["efin","error final","°",2],["eRampa","error rampa","°",2],["gan","ganancia","",3],["fase","fase","°",1],["emax","error máx","°",2],["iae","IAE","",3],["ise","ISE","",3],["osc","osc.","",0]];
+  const sel=[...marcados];
+  $("#tblRes").innerHTML=`<tr><th></th><th>#</th><th class="t">ensayo</th><th>A</th><th>p2</th><th class="t">control</th><th>Kp</th><th>Ki</th><th>Kd</th><th class="t">aw/vel/zm</th>${cols.map(c=>`<th>${c[1]}</th>`).join("")}<th class="t">fecha</th></tr>`+
+    resultados.map((r,i)=>{ const j=sel.indexOf(r.id), f=String(r.flags||"").padStart(4,"0");
+      return `<tr><td><input type="checkbox" data-id="${r.id}" ${j>=0?"checked":""}>${j>=0?` <span class="chip" style="background:var(--series-${j+1})"></span>`:""}</td><td>${i+1}</td>
+      <td class="t">${TIPOS[r.tipo]?.t||r.tipo}${r.met.aprox?" *":""}</td><td>${r.A}</td><td>${r.p2||""}</td><td class="t">${["","P","PI","PD","PID"][r.modo]}</td><td>${r.kp}</td><td>${r.ki}</td><td>${r.kd}</td>
+      <td class="t">${f[1]==="1"?"sí":"no"}/${f[2]==="1"?"sí":"no"}/${r.zm}</td>${cols.map(c=>`<td>${r.met[c[0]]===undefined||r.met[c[0]]===null?"":fx(r.met[c[0]],c[3])}</td>`).join("")}<td class="t">${r.fecha}</td></tr>`; }).join("")+
+    (resultados.length?"":`<tr><td colspan="22" class="t" style="color:var(--muted)">Todavía no hay ensayos. * = amplitud fuera de la zona lineal.</td></tr>`);
+  $$("#tblRes input[type=checkbox]").forEach(cb=> cb.onchange=()=>{ const id=+cb.dataset.id; if(cb.checked){ marcados.add(id); while(marcados.size>4) marcados.delete([...marcados][0]); } else marcados.delete(id); dibujarRes(); });
+  // comparación
+  const runs=sel.map(id=>resultados.find(r=>r.id===id)).filter(Boolean);
+  const series=runs.map((r,i)=>({label:`#${resultados.indexOf(r)+1} ${["","P","PI","PD","PID"][r.modo]} Kp${r.kp} Ki${r.ki}${r.kd?" Kd"+r.kd:""}`, c:i+1}));
+  gComp.setSeries(series); gCompE.setSeries(series); gComp.limpiar(); gCompE.limpiar();
+  runs.forEach((r,i)=> r.mu.forEach(a=>{ const m=muObj(a); const vals=runs.map(()=>NaN), ve=runs.map(()=>NaN);
+    vals[i]=seguido(r,m)[0]; ve[i]=m.ref-m.p; gComp.agregar(m.t, vals, i); gCompE.agregar(m.t, ve, i); }));
+  gComp.data.sort((a,b)=>a[2]-b[2]||a[0]-b[0]); gCompE.data.sort((a,b)=>a[2]-b[2]||a[0]-b[0]);
+  const ult=resultados[resultados.length-1]; if(ult && $("#metsUlt").textContent.includes("Todavía")) mostrarMetricas(ult,"#metsUlt");
+  sucio=true;
+}
+function descargar(nombre, texto){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([texto],{type:"text/csv"})); a.download=nombre; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+$("#btnCsvRes").onclick=()=>{
+  const ks=["sub","sobre","tEst","efin","eRampa","gan","fase","emax","iae","ise","osc"];
+  const filas=[["n","fecha","ensayo","A","p2","modo","kp","ki","kd","flags_dmed_aw_lvel_corr","zm","per","aprox",...ks].join(";")].concat(
+    resultados.map((r,i)=>[i+1,r.fecha,r.tipo,r.A,r.p2,["","P","PI","PD","PID"][r.modo],r.kp,r.ki,r.kd,String(r.flags).padStart(4,"0"),r.zm,r.per,r.met.aprox?1:0,...ks.map(k=>r.met[k]??"")].join(";")));
+  descargar("ensayos_resumen.csv", filas.join("\n").replace(/\./g,","));
+};
+$("#btnCsvMu").onclick=()=>{
+  const runs=[...marcados].map(id=>resultados.find(r=>r.id===id)).filter(Boolean);
+  if(!runs.length){ toast("Marcá al menos un ensayo.",true); return; }
+  const filas=["n;ensayo;t_s;p;L;ref;e;P;I;D;u;th"];
+  runs.forEach(r=> r.mu.forEach(a=> filas.push([resultados.indexOf(r)+1, r.tipo, ...a].join(";"))));
+  descargar("ensayos_muestras.csv", filas.join("\n").replace(/\./g,","));
+};
+$("#btnBorrar").onclick=()=>{ if(!marcados.size) return; if(!confirm(`¿Borrar ${marcados.size} ensayo(s)?`)) return; resultados=resultados.filter(r=>!marcados.has(r.id)); marcados.clear(); persistir(); dibujarRes(); };
+dibujarRes();
+
+/* ================================================================== mensajes de la placa */
+function manejarLinea(line){
+  try{ procesar(line); }catch(e){ console.warn("línea no procesada:", line, e); }
+}
+function procesar(line){
+  if(!line) return;
+  const c=line.split(","), k=c[0];
+  if(k==="T"){ T(c); if($("#chkT").checked) log(line); return; }
+  if(k==="CS"){
+    const pas=+c[1], x=+c[2], s=+c[3];
+    if(pas===0) gA.agregar(x,[+c[4],+c[5]]);
+    else if(pas<=2) gS.agregar(x, pas===1?[s,NaN]:[NaN,s], pas);
+    else gSL.agregar(x, pas===3?[s,NaN]:[NaN,s], pas);
+    return;
+  }
+  log(line, k==="ERR"?"err":(k==="OK"?"ok":""));
+  if(k==="P") recibirParam(c);
+  else if(k==="K") K(c);
+  else if(k==="END"){ construirTodo(); rangoBrazo=[params.amin?.v??60, params.amax?.v??120]; rangoLin=[-(params.plmax?.v??12), params.plmax?.v??12]; ctrlResumen(); mostrarDiag(); }
+  else if(k==="ST"){ setEstado(c[1]); siNo($("#tCal"),+c[2]); setDirty(c[3]==="1"); $("#tAtr").textContent=c[4]; siNo($("#tCalp"),+c[8]); }
+  else if(k==="S"){ setEstado(c[1]); if(ensActual && c[1]!=="ENSAYO" && ensActual.msDisp!==null && !finVisto) {} }
+  else if(k==="E") E(c);
+  else if(k==="BOOT"){ $("#tFw").textContent=c[2]; $("#tBoot").textContent=c[3]; ultSeq=null; t0ms=null; GRAFS.forEach(g=>{ if(g!==gComp&&g!==gCompE) g.limpiar(); }); pedirTodo(); }
+  else if(k==="C"){
+    if(c[1]==="INICIO"){ if(c[2]==="brazo"){ gA.limpiar(); gS.limpiar(); diag={msg:"calibrando el brazo…"}; } else { gSL.limpiar(); diag.msg="calibrando el perturbador…"; } mostrarDiag(); }
+    else if(c[1]==="PASADA"){ diag.msg="pasada "+c[2]; mostrarDiag(); }
+    else if(c[1]==="DIAG"){ Object.assign(diag,{cI:+c[2],cD:+c[3],bI:+c[4],bD:+c[5],aI:+c[6],aD:+c[7],desf:+c[8]}); mostrarDiag(); }
+    else if(c[1]==="OK"){ diag.ret=+c[4]; cal.calOk=1; cal.thLinea=+c[2]; cal.pend=+c[3]; cal.calModo=Math.round(params.corr?.v??1); siNo($("#tCal"),1); diag.msg="calibración del brazo correcta — falta guardar"; setDirty(true); send("get"); }
+  }
+  else if(k==="CP"){ diag.cp={ratio:(+c[5]).toFixed(3), inv:c[6]==="1"}; cal.calpOk=1; siNo($("#tCalp"),1); diag.msg="perturbador calibrado — falta guardar"; setDirty(true); send("get"); }
+  else if(k==="ERR"){
+    toast(line.replace(/^ERR,/,"Error: ").replace(/,/g," · "), true);
+    if(c[1]==="cal"){ diag.msg="falló: "+c.slice(2).join(","); mostrarDiag(); }
+    if(c[1]==="ens"){ if(ensActual) terminarEnsayo(true); $("#ensMsg").textContent=""; }
+    if(c[1]==="set" && c[2] && params[c[2]]){ params[c[2]].el?.classList.replace("pend","err"); pend.delete(c[2]); }
+  }
+  else if(k==="OK"){
+    if(c[1]==="save"){ setDirty(false); toast("Configuración guardada en la placa."); }
+    if(c[1]==="load"||c[1]==="defaults"){ setDirty(c[1]==="defaults"); pedirTodo(); }
+    if(c[1]==="lcero") setDirty(true), send("get");
+  }
+  else if(k==="I" && c[1]==="ens") toast(c.slice(2).join(","));
+}
+let finVisto=false;
+
+/* ================================================================== consola */
+const logEl=$("#log");
+function log(t, cls=""){ const s=document.createElement("div"); if(cls) s.className=cls; s.textContent=t; logEl.appendChild(s); while(logEl.childElementCount>600) logEl.firstChild.remove(); logEl.scrollTop=logEl.scrollHeight; }
+let toastT=null;
+function toast(msg, err=false){ const t=$("#toast"); t.textContent=msg; t.className=err?"err":""; t.style.display="block"; clearTimeout(toastT); toastT=setTimeout(()=>t.style.display="none", err?6000:2600); }
+
+/* ================================================================== puerto serie */
+let port=null, writer=null, reader=null, leyendo=false, demo=null;
+async function conectar(){
+  if(!("serial" in navigator)){ toast("Este navegador no tiene Web Serial. Usá Chrome o Edge en la computadora.", true); return; }
+  try{
+    port=await navigator.serial.requestPort();
+    await port.open({baudRate:115200});
+    writer=port.writable.getWriter();
+    setCon(true); log("— conectado; la placa se reinicia al abrir el puerto —","sys");
+    leer();
+    setTimeout(()=>{ if(!Object.keys(params).length) pedirTodo(); }, 2500);
+  }catch(e){ log("conexión cancelada: "+e.message,"sys"); port=null; }
+}
+async function desconectar(){
+  leyendo=false;
+  try{ await reader?.cancel(); }catch{} try{ reader?.releaseLock(); }catch{}
+  try{ writer?.releaseLock(); }catch{} try{ await port?.close(); }catch{}
+  port=writer=reader=null; setCon(false);
+}
+async function leer(){
+  leyendo=true; const dec=new TextDecoder(); let buf="";
+  reader=port.readable.getReader();
+  try{
+    while(leyendo){
+      const {value,done}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      let i; while((i=buf.indexOf("\n"))>=0){ manejarLinea(buf.slice(0,i).replace(/\r$/,"")); buf=buf.slice(i+1); }
+    }
+  }catch(e){ log("lectura interrumpida: "+e.message,"sys"); }
+  finally{ try{reader.releaseLock();}catch{} }
+}
+const cola=[]; let enviandoCola=false;
+function send(cmd){
+  log("» "+cmd,"tx");
+  if(demo) return;
+  if(!writer){ toast("No hay placa conectada.", true); return; }
+  cola.push(cmd+"\n"); vaciarCola();
+}
+async function vaciarCola(){
+  if(enviandoCola) return; enviandoCola=true;
+  const enc=new TextEncoder();
+  while(cola.length){ try{ await writer.write(enc.encode(cola.shift())); }catch(e){ log("error al enviar: "+e.message,"err"); break; } await new Promise(r=>setTimeout(r,15)); }
+  enviandoCola=false;
+}
+function pedirTodo(){ if(!demo){ send("tel 1"); send("get"); } }
+function setCon(on){
+  $("#dCon").classList.toggle("on",on||!!demo); $("#tCon").textContent=on?"Conectado · 115200":(demo?"Demo (simulación)":"Sin conexión");
+  $("#btnCon").textContent=on?"Desconectar":"Conectar placa";
+}
+$("#btnCon").onclick=()=>{ if(demo) pararDemo(); port?desconectar():conectar(); };
+$$("[data-cmd]").forEach(b=> b.onclick=()=> send(b.dataset.cmd));
+$("#btnDef").onclick=()=>{ if(confirm("¿Volver a los valores de fábrica?\nSe pierden las calibraciones en memoria (lo guardado en la placa queda hasta que pulses Guardar).")) send("defaults"); };
+$("#inCmd").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.value.trim()){ send(e.target.value.trim()); e.target.value=""; } });
+setInterval(()=>{ if(writer && !document.hidden){ cola.push("status\n"); vaciarCola(); } }, 3000);
+document.addEventListener("visibilitychange",()=>{ sucio=true; });
+
+/* ================================================================== demo */
+async function textoDemo(){
+  const b64=$("#demoData").textContent.trim();
+  if(b64.startsWith("__")) return "";
+  const bin=Uint8Array.from(atob(b64), ch=>ch.charCodeAt(0));
+  const ds=new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return await new Response(ds).text();
+}
+async function arrancarDemo(){
+  if(port){ toast("Desconectá la placa para ver la demo.", true); return; }
+  const txt=await textoDemo(); if(!txt){ toast("Esta copia del panel no trae la demo.",true); return; }
+  const filas=txt.trim().split("\n").map(l=>{ const i=l.indexOf("\t"); return [+l.slice(0,i), l.slice(i+1)]; });
+  demo={filas, i:0, t:filas[0][0], ult:performance.now(), timer:null};
+  for(const k in params) delete params[k];
+  $$(".ps[data-p]").forEach(s=>s.innerHTML="");
+  GRAFS.forEach(g=>{ if(g!==gComp&&g!==gCompE) g.limpiar(); }); ultSeq=null; t0ms=null; perdidas=0; cal={}; diag={};
+  setCon(false); $("#btnDemo").textContent="Detener demo"; $("#selVel").style.display="";
+  const tick=()=>{
+    const now=performance.now(); demo.t+=(now-demo.ult)/1000*(+$("#selVel").value); demo.ult=now;
+    while(demo.i<demo.filas.length && demo.filas[demo.i][0]<=demo.t){ manejarLinea(demo.filas[demo.i][1]); demo.i++; }
+    if(demo.i>=demo.filas.length){ pararDemo(); log("— fin de la demo —","sys"); return; }
+    demo.timer=setTimeout(tick, 20);
+  };
+  log("— demo: simulación del firmware (calibraciones, PI/P/PID, ensayos, interruptores) —","sys");
+  tick();
+}
+function pararDemo(){ if(!demo) return; clearTimeout(demo.timer); demo=null; $("#btnDemo").textContent="Demo"; $("#selVel").style.display="none"; setCon(!!port); }
+$("#btnDemo").onclick=()=> demo?pararDemo():arrancarDemo();
+window.__panel={manejarLinea, params, get resultados(){return resultados;}, get estado(){return estado;}, arrancarDemo, ir:(t)=>$(`#tabs button[data-tab="${t}"]`).click(), get demoI(){return demo?demo.i:-1;}};
+mostrarDiag(); ctrlResumen();
+</script>
+</body>
+</html>

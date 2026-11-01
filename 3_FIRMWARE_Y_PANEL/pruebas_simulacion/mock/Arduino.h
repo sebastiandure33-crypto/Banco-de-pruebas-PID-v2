@@ -48,3 +48,7 @@ class SimSerial {
   void println() { write_str("\r\n"); }
 };
 extern SimSerial Serial;
+
+// min/max de Arduino (como funciones para no chocar con std::min/std::max)
+template <class A, class B> inline auto max(A a, B b) -> decltype(a + b) { return a > b ? a : b; }
+template <class A, class B> inline auto min(A a, B b) -> decltype(a + b) { return a < b ? a : b; }

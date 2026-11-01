@@ -19,3 +19,14 @@ CÓMO MODIFICAR Y REGENERAR LAS PIEZAS
    Los STL se guardan en 1_DISENO_3D/variantes/ y en pantalla aparece la verificación:
    todos los valores de choque deben dar 0. Para imprimir, copiar brazo_L120.stl y
    base_apoyo_libre_L120.stl a 1_DISENO_3D/impresion/ como 01_brazo_L120.stl y 02_base_L120.stl.
+
+4. Plataforma de la línea y perturbador (usa los parámetros de seguidor.py):
+       python3 plataforma.py
+   Genera P1..P5 en 1_DISENO_3D/variantes/plataforma/ y verifica choques y engrane (todo debe
+   dar 0). Parámetros útiles al inicio de plataforma.py:
+       Z_SURF       altura de la superficie de la línea sobre la mesa (6 mm)
+       Z_PIN, Z_RACK, MOD, BACKLASH   piñón, cremallera, módulo y juego entre dientes
+       SEC_HALF, SEC_TRAVEL           ancho del sector y giro máximo
+       TAPE_W       ancho del canal de la cinta (19,6 para cinta de 19 mm)
+   Para imprimir, copiar a 1_DISENO_3D/impresion/ como 03_pedestal, 04_pista_BLANCO,
+   05_sector_linea_BLANCO, 06_pinon y 07_soporte_perturbador.

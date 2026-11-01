@@ -1,10 +1,18 @@
 Simulación del firmware en la PC (no se carga en la placa).
-Compila el mismo seguidor_v2.ino contra un Arduino simulado y un modelo físico
-(servo, brazo, LDR, línea en movimiento) y corre 16 chequeos.
+Compila el mismo banco_pid_v3.ino contra un Arduino simulado y un modelo físico y corre 31 chequeos.
+
+Modelo: servo del brazo con zona muerta, latencia y juego de 0,8°; brazo de 120 mm con el horn
+corrido 2,5°; dos LDR lentos y distintos (uno casi saturado); línea radial de 19 mm sobre el
+sector, movida por el servo perturbador con relación REAL 7,2 (el firmware arranca con 7,375),
+sentido invertido y horn corrido 1,5°; ruido del ADC; puerto serie a 115200 con buffer de 64 bytes.
 
   g++ -std=c++17 -O2 -Imock sim.cpp -o sim
   ./sim                      sistema a velocidad normal
-  LAG=2 ./sim                sistema 2 veces más lento (LDR y servo)
-  DEMO=1 ./sim               genera demo.txt (la grabación que usa el botón Demo del panel)
+  LAG=2 ./sim                LDR y servo del brazo 2 veces más lentos (LAG=3: 3 veces)
+  DEMO=1 ./sim               genera demo.txt (la grabación del botón Demo del panel)
 
-(sim.cpp incluye ../seguidor_v2/seguidor_v2.ino: mantener la estructura de carpetas.)
+Después de cambiar demo.txt, rearmar el panel:  python3 ../panel/construir_panel.py
+
+(sim.cpp incluye ../banco_pid_v3/banco_pid_v3.ino: mantener la estructura de carpetas.)
+
+Resultados guardados: resultado_sistema_x1.txt, _x2.txt y _x3.txt (los tres: 0 chequeos fallidos).

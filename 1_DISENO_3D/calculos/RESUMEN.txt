@@ -55,3 +55,17 @@ CAMBIOS RESPECTO DE LAS VERSIONES ANTERIORES
     y la cabeza del tornillo de 2 x 6 mm va avellanada (entra 3,4 mm en el eje).
   - Salida del cable del servo: ranura abierta por arriba (7,3 mm, lado opuesto a la torre)
     en lugar de un túnel cerrado, para colocar el cable ya soldado a la placa.
+
+PLATAFORMA DE LA LÍNEA Y SERVO PERTURBADOR (plataforma.py, salida en salida_plataforma.txt)
+  - Superficie de la línea a 6 mm de la mesa; el soporte encastra 2 mm en el pedestal y queda a
+    la misma altura: los LDR siguen a 7,1 mm de la superficie del sector.
+  - Sector de ±20° que gira en el eje del servo del brazo, dentro de un canal de la pista
+    (±33,5°); la pista blanca cubre ±36° (el LDR exterior llega a ±34,8° con el brazo a ±30°).
+  - Engranaje módulo 1,25, 20°: cremallera curva de 236 dientes virtuales (R 147,5) y piñón de
+    32 dientes: relación 7,375:1 -> 1° de servo = 0,136° de línea; recorrido ±12,2° de línea.
+    Juego entre dientes 0,15 mm (0,06° de línea).
+  - Servo perturbador boca abajo sobre un puente; ranuras de 3 mm para desengranar.
+  - Verificado sin choques: base/pedestal, pedestal/pista, servo y horn del perturbador, sector
+    girando ±12,5° contra pista/pedestal/soporte, sector y piñón engranando en todo el recorrido,
+    brazo a ±30° contra toda la plataforma. Las 5 piezas son sólidos cerrados.
+  - Todas entran en una cama de 200 x 200 mm y se imprimen sin soportes.

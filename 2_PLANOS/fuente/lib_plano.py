@@ -40,7 +40,7 @@ def hoja(titulo, n, total, escala, sub=""):
     fr.text(x0 + 3, y0 + 19.5, "Seguidor de línea estático · servo SG90 · brazo L = 120", fontsize=7.5, va="center")
     fr.text(x0 + 3, y0 + 6.5, sub or "Medidas en mm · PLA negro · tolerancia general ±0,2", fontsize=7.5, va="center")
     fr.text(x0 + 108, y0 + 19.5, f"Escala {escala}", fontsize=8, va="center")
-    fr.text(x0 + 108, y0 + 6.5, f"Hoja {n} de {total} · 25/10/2026", fontsize=8, va="center")
+    fr.text(x0 + 108, y0 + 6.5, f"Hoja {n} de {total} · 01/11/2026", fontsize=8, va="center")
     return fig, fr
 
 

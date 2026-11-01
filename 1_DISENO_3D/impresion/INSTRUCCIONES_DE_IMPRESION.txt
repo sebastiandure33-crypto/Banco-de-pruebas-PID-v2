@@ -1,25 +1,31 @@
-PEDIDO DE IMPRESIÓN 3D - Soporte de seguidor de línea con servo SG90
+PEDIDO DE IMPRESIÓN 3D - Banco de pruebas PID con servos SG90 (7 piezas, 2 colores)
 (versión texto del PDF INSTRUCCIONES_DE_IMPRESION.pdf - unidades en mm)
 
 RESUMEN
-  PLA NEGRO opaco - boquilla 0,4 - capa 0,16 - SIN SOPORTES - escala 100 %
+  PLA NEGRO opaco (01, 02, 03, 06, 07) y PLA BLANCO opaco mate (04 y 05, dicen BLANCO en el nombre)
+  Boquilla 0,4 - capa 0,16 - SIN SOPORTES - escala 100 %
   Orientación: la que trae cada STL (ya está orientado para imprimir). No rotar.
-  Filamento total: ~32 g como máximo (las 2 piezas al 100 %).
+  Filamento total: ~175 g como máximo (todo al 100 %); con los rellenos indicados, bastante menos.
 
-1. PIEZAS (1 de cada una, 2 en total)
+1. PIEZAS (1 de cada una, 7 en total)
   01_brazo_L120.stl          143,3 x 29,0 x 31,0   ~11,1 g   relleno 100 % (o >= 60 % giroide)
   02_base_L120.stl            63,6 x 53,6 x 108,9  ~20,2 g   relleno 40 % giroide
-  El brazo necesita una cama de al menos 150 mm (o ubicarlo en diagonal).
+  03_pedestal.stl            123,9 x 64,0 x 8,0    ~32,7 g   relleno 30 % giroide
+  04_pista_BLANCO.stl        130,3 x 190,4 x 6,0   ~70,8 g   relleno 25 % giroide   BLANCO
+  05_sector_linea_BLANCO.stl  59,5 x 101,8 x 2,9   ~15,5 g   relleno 100 %          BLANCO
+  06_pinon.stl                42,4 x 42,4 x 5,1     ~7,5 g   relleno 100 %
+  07_soporte_perturbador.stl  40,0 x 63,0 x 12,4   ~15,1 g   relleno 50 % giroide
+  Cama de al menos 200 x 200 mm (brazo 143 mm, pista 190 mm).
 
 2. PARÁMETROS
-  Material ............ PLA negro opaco (mate preferido). Alternativa: PETG negro.
-                        No usar colores claros ni translúcidos (aloja sensores de luz).
+  Material ............ PLA negro opaco (mate preferido) en 01, 02, 03, 06, 07: alojan sensores de luz.
+                        PLA blanco opaco mate en 04 y 05: es la superficie que miran los sensores.
   Boquilla ............ 0,4 mm
   Altura de capa ...... 0,16 mm (0,12 - 0,20). Primera capa 0,20 mm.
   Paredes ............. 3 (>= 1,2 mm)
   Capas sup./inf. ..... 5 / 4
   Soportes ............ NO. Solo hay techos cortos de canales internos (puentes de 4 - 7 mm).
-  Adherencia .......... Brim 4 mm en brazo y base.
+  Adherencia .......... Brim 4 mm en brazo, base y pista.
   Pata de elefante .... Compensar ~0,15 mm (el brazo apoya en la cama la cara con el canal).
   Compensación XY ..... 0 (no agrandar ni achicar agujeros).
   Ventilador .......... 100 % desde la capa 3.
@@ -28,6 +34,8 @@ RESUMEN
 3. ORIENTACIÓN (ya aplicada)
   01 Brazo: boca abajo, la cara plana superior apoya entera en la cama.
   02 Base:  placa sobre la cama, torre hacia arriba (tramo inclinado a 45°, sin soporte).
+  03, 04, 05: planas, cara grande sobre la cama (encastres, canal y escala hacia arriba).
+  06 Piñón: hueco del horn hacia arriba.   07 Soporte: boca abajo (placa sobre la cama).
 
 4. MEDIDAS CRÍTICAS (± 0,15 mm)
   Brazo: cubo del horn Ø7,4 - paleta 7,4->4,0 x 16,4 - cabinas LDR Ø5,5 (ventana Ø3,6)
@@ -35,6 +43,9 @@ RESUMEN
   Base:  bolsillo del servo 22,9 x 12,5 - guías M2 Ø1,7 - fijación M3 Ø3,4
          anillo de cables Ø6,5 con ranura 1,4 - ranuras de precinto 1,6 x 3,2
          ranura del cable del servo abierta por arriba, 7,3 de ancho
+  Plataforma: encastre de la base en el pedestal (huella + 0,3) - cola de milano 14->20 (holgura 0,15)
+         canal del sector R94,7-R149,6 - dientes módulo 1,25 (no lijar) - piñón: hueco del horn
+         igual que el brazo - soporte: alojamiento del servo 22,9 x 12,5, ranuras M3
 
 5. PRECISIÓN
   La medida más importante es el hueco del horn en la cara de abajo del brazo (Ø7,4 y la paleta):
@@ -49,4 +60,5 @@ RESUMEN
   [ ] Una varilla de 5 mm entra libre en las dos cabinas del LDR hasta el tope.
   [ ] La cara superior del brazo salió plana.
   [ ] La torre está recta y el anillo, completo.
-  [ ] Las 2 piezas en negro opaco, sin capas separadas.
+  [ ] 01, 02, 03, 06, 07 en negro opaco; 04 y 05 en blanco opaco mate; sin capas separadas.
+  [ ] El sector entra en el canal de la pista y gira a mano; el piñón engrana con sus dientes.
