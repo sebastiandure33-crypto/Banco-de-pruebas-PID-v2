@@ -1,0 +1,29 @@
+base_compacta_atornillar.stl watertight=True  vol=14.04 cm3  bbox=[44.5, 27.7, 108.9]
+   base compacta: margen de vuelco -3.0 mm -> ATORNILLAR obligatorio
+brazo_L100.stl               watertight=True  vol=8.30 cm3  bbox=[123.3, 29.0, 31.0]
+   verificación: {'servo∩base': -0.0, 'horn∩brazo': 0.0, 'tornillo/destornillador∩torre': 0.0, 'brazo(±30°)∩base/torre/servo': 0.0, 'LDR∩LED (con 0.6 de pared)': 0.0, '10 cables∩brazo (en el canal)': 0.0, 'asiento LED - sin material (mm³)': 0.0, 'asiento LED + sin material (mm³)': 0.0, 'voladizo sin apoyo al imprimir (mm²)': 40.6, 'apoyo en cama de x a x (mm)': (-6.5, 103.8)}
+base_apoyo_libre_L100.stl    watertight=True  vol=15.31 cm3  bbox=[57.6, 44.1, 108.9]
+   pie r=28 mm -> margen +8.2 mm a +30°, conjunto 40.6 g
+   verificación: {'servo∩base': -0.0, 'horn∩brazo': 0.0, 'tornillo/destornillador∩torre': 0.0, 'brazo(±30°)∩base/torre/servo': 0.0, 'LDR∩LED (con 0.6 de pared)': 0.0, '10 cables∩brazo (en el canal)': 0.0, 'asiento LED - sin material (mm³)': 0.0, 'asiento LED + sin material (mm³)': 0.0, 'voladizo sin apoyo al imprimir (mm²)': 40.6, 'apoyo en cama de x a x (mm)': (-6.5, 103.8)}
+brazo_L120.stl               watertight=True  vol=8.95 cm3  bbox=[143.3, 29.0, 31.0]
+   verificación: {'servo∩base': -0.0, 'horn∩brazo': 0.0, 'tornillo/destornillador∩torre': 0.0, 'brazo(±30°)∩base/torre/servo': 0.0, 'LDR∩LED (con 0.6 de pared)': 0.0, '10 cables∩brazo (en el canal)': 0.0, 'asiento LED - sin material (mm³)': 0.0, 'asiento LED + sin material (mm³)': 0.0, 'voladizo sin apoyo al imprimir (mm²)': 58.1, 'apoyo en cama de x a x (mm)': (-6.5, 123.8)}
+base_apoyo_libre_L120.stl    watertight=True  vol=16.32 cm3  bbox=[63.6, 53.6, 108.9]
+   pie r=34 mm -> margen +8.9 mm a +30°, conjunto 43.1 g
+   verificación: {'servo∩base': -0.0, 'horn∩brazo': 0.0, 'tornillo/destornillador∩torre': 0.0, 'brazo(±30°)∩base/torre/servo': 0.0, 'LDR∩LED (con 0.6 de pared)': 0.0, '10 cables∩brazo (en el canal)': 0.0, 'asiento LED - sin material (mm³)': 0.0, 'asiento LED + sin material (mm³)': 0.0, 'voladizo sin apoyo al imprimir (mm²)': 58.1, 'apoyo en cama de x a x (mm)': (-6.5, 123.8)}
+brazo_L150.stl               watertight=True  vol=9.94 cm3  bbox=[173.3, 29.0, 31.0]
+   verificación: {'servo∩base': -0.0, 'horn∩brazo': 0.0, 'tornillo/destornillador∩torre': 0.0, 'brazo(±30°)∩base/torre/servo': 0.0, 'LDR∩LED (con 0.6 de pared)': 0.0, '10 cables∩brazo (en el canal)': 0.0, 'asiento LED - sin material (mm³)': 0.0, 'asiento LED + sin material (mm³)': 0.0, 'voladizo sin apoyo al imprimir (mm²)': 58.1, 'apoyo en cama de x a x (mm)': (-6.5, 153.8)}
+base_apoyo_libre_L150.stl    watertight=True  vol=17.98 cm3  bbox=[71.6, 66.2, 108.9]
+   pie r=42 mm -> margen +8.7 mm a +30°, conjunto 47.1 g
+   verificación: {'servo∩base': -0.0, 'horn∩brazo': 0.0, 'tornillo/destornillador∩torre': 0.0, 'brazo(±30°)∩base/torre/servo': 0.0, 'LDR∩LED (con 0.6 de pared)': 0.0, '10 cables∩brazo (en el canal)': 0.0, 'asiento LED - sin material (mm³)': 0.0, 'asiento LED + sin material (mm³)': 0.0, 'voladizo sin apoyo al imprimir (mm²)': 58.1, 'apoyo en cama de x a x (mm)': (-6.5, 153.8)}
+
+Cara superior del brazo z=37.95; anillo guía z=102.9–108.9; cable libre 65 mm
+Par de los cables sobre el servo a ±30° (SG90 = 137 N·mm a 4,8 V):
+   rígido (red)      : 18.10 N·mm = 13.2 %   deformación cobre 0.119 % (cerca/sobre fluencia)
+   multifilar 7x0.2  :  3.00 N·mm =  2.2 %   deformación cobre 0.047 % (elástico)
+
+  L(mm) | cobertura ±mm | mm por grado | masa brazo+cables g | I (kg·m²) | acel. (rad/s²)
+     80 |          40.0 |         1.40 |                11.4 | 5.36e-05 |       640
+    100 |          50.0 |         1.75 |                12.6 | 8.64e-05 |       397
+    120 |          60.0 |         2.09 |                13.9 | 1.29e-04 |       266
+    150 |          75.0 |         2.62 |                15.8 | 2.14e-04 |       161
+    180 |          90.0 |         3.14 |                17.7 | 3.26e-04 |       105

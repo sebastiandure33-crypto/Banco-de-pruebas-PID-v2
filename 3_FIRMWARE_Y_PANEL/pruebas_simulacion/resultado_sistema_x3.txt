@@ -1,0 +1,53 @@
+== ARRANQUE ==
+  [  0.302] BOOT,seguidor,2.0,desconocida,config de fabrica
+  [  0.302] I,ordenes: get | set <nom> <val> | run | stop | cal | goto <g> | esc <g>
+  [  0.302] I,         save | load | defaults | tel 1|0 | status
+  [  0.302] ST,REPOSO,0,0,0,90.00,0
+  OK   mensaje de arranque
+  RAW sobre blanco/negro (muy distintos a proposito): rawI=598 rawD=622
+== CALIBRACION ==
+  C,OK,linea=90.50,pendiente=0.7521,retardo_grados=1.78,contrasteI=4.91,contrasteD=4.76
+  [debug] gI 0.4901..2.4074  gD 0.3992..1.9015
+  OK   calibracion exitosa
+  linea real en 90.50°, calibracion dice 90.50°
+  OK   centro calibrado a menos de 1° del real
+== SEGUIMIENTO, LINEA QUIETA ==
+  error medio 0.02°, max 0.02°, oscilacion pico a pico 0.00° (comando 0.00°)
+  OK   centrado (error medio < 0,6°)
+  OK   sin bucle (oscilacion < 1,2° pico a pico, el juego mecanico es 0,8°)
+  desde 80° llega a <1° de la linea en 0.60 s
+== ESCALON DE LA LINEA (8 mm) ==
+  error final -0.10°, sobrepaso 1.46°
+  OK   escalon absorbido sin oscilar
+== LINEA EN MOVIMIENTO (senoidal) ==
+  linea a   10 mm/s pico: error RMS 0.84°, max 1.41°, tiempo perdido 0.00 s
+  OK   sigue la linea sin perderla
+  linea a   25 mm/s pico: error RMS 1.43°, max 2.96°, tiempo perdido 0.00 s
+  OK   sigue la linea sin perderla
+  linea a   45 mm/s pico: error RMS 3.52°, max 6.34°, tiempo perdido 0.00 s
+== LINEA PERDIDA (salto de 45 mm) ==
+  paso a PERDIDO: si, recuperada a <1° en 1.83 s
+  OK   busca y recupera la linea
+== ORDENES EN RAFAGA (robustez del protocolo) ==
+  OK   todas las ordenes validas aplicadas, sin perder letras
+  OK   orden invalida rechazada
+  OK   valor fuera de rango rechazado
+  OK   linea larga descartada
+  bytes perdidos por desborde del buffer: 0
+  OK   el control siguio funcionando durante la rafaga
+== AJUSTES EN VIVO Y PARADA/ARRANQUE (el viejo bug del bucle) ==
+  tras 11 cambios en vivo + stop/goto/run: error medio -0.17°, pico a pico 0.00°
+  OK   vuelve a centrar sin reiniciar la placa
+== GANANCIAS EXAGERADAS (margen de estabilidad) ==
+  ki=8 (el doble): pico a pico 0.00° (comando 0.00°)
+== EEPROM ==
+  OK   save/load restaura la configuracion y la calibracion
+  OK   EEPROM corrupta detectada por CRC
+== SENSOR DESCONECTADO ==
+  OK   falla detectada y control detenido
+== ENSAYO DE ESCALON (identificacion) ==
+  lineas de telemetria durante el ensayo: 100 (esperado ~100 a 50 Hz)
+  OK   registro completo del escalon
+
+ciclos atrasados (lazo de 20 ms): 0
+RESULTADO: 0 chequeos fallidos

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+# binario y registro de la simulación del firmware
+3_FIRMWARE_Y_PANEL/pruebas_simulacion/sim
+3_FIRMWARE_Y_PANEL/pruebas_simulacion/sim.exe
+3_FIRMWARE_Y_PANEL/pruebas_simulacion/registro.csv
+build/

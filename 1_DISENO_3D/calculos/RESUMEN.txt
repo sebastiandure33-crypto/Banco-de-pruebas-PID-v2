@@ -1,0 +1,57 @@
+RESUMEN DE CÁLCULOS Y VERIFICACIÓN (diseño final, L = 120 mm salvo que se indique)
+==========================================================================
+
+MEDIDAS DEL SERVO (plano SG90, tolerancia ±1,5 %)
+  Cuerpo 22,5 x 11,8 (algunas marcas 12,15) x 22,7; tapa superior a 26,7; eje Ø4,6, sobresale 3,2.
+  Orejas: 31,9 de largo total, cara inferior a 15,9, espesor 2,5; agujeros a 27,3 entre centros.
+  Horn de un brazo: 19,6 mm de largo total. Par de bloqueo 1,4 kg·cm (4,8 V) / 1,9 kg·cm (6 V).
+
+VERIFICACIONES GEOMÉTRICAS (todas OK en L = 100, 120 y 150)
+  - Brazo, base, torre y servo sin choques en todo el barrido -30°..+30° (cada 5°).
+  - Horn y brazo sin interferencia; tornillo y destornillador pasan por el anillo.
+  - Los 10 cables (Ø1,0) entran en el canal, también bajo las pestañas.
+  - Asiento del reborde de cada LED rodeado por >= 1 mm de material.
+  - Brazo: toda la cara superior apoya en la cama (x = -6,5 .. 123,8 mm).
+  - Sin voladizos libres al imprimir: solo techos de canales (puentes cortos de 4-7 mm).
+  - Todas las piezas son sólidos cerrados (watertight).
+
+CABEZAL / ÓPTICA
+  - Cara del LDR a 8,0 mm del piso; boca de la cabina a 7,0 mm.
+  - El LDR "ve" en el piso un círculo de ~8,5 mm de diámetro.
+  - LED inclinado 35°, apunta a ~2,6 mm del eje del LDR en el piso.
+  - Separación entre LDR: 20 mm (LDR_SP) -> igualarla al ancho de la línea.
+
+LARGO DEL BRAZO (cobertura = ±L·sen30°)
+  L     cobertura   mm por grado   masa brazo+cables   aceleración máx.*
+  100   ±50 mm      1,75           12,6 g              397 rad/s²
+  120   ±60 mm      2,09           13,9 g              266 rad/s²
+  150   ±75 mm      2,62           15,8 g              161 rad/s²
+  * suponiendo 25 % del par de bloqueo del SG90 (1,4 kg·cm = 137 N·mm a 4,8 V).
+
+FLEXIÓN Y RIGIDEZ
+  - Flecha de la punta por peso propio: < 0,5 mm (holgura al piso 7 mm): no toca el piso.
+  - Primer modo de flexión en el plano de giro ~50 Hz (L=120) -> PID útil hasta ~10 Hz.
+    (valor calculado para la sección anterior de 7 x 3,4 mm; la sección final de
+     9,6 x 5,05 mm es más rígida, así que el valor real es igual o mayor)
+
+ESTABILIDAD (vuelco)
+  - Base compacta: margen -3,0 mm -> se vuelca: hay que atornillarla.
+  - Base con pie (radio 34 mm en L=120): margen +8,9 mm en el peor ángulo.
+
+CABLES (par que le hacen al servo a ±30°; par de bloqueo SG90 = 137 N·mm a 4,8 V)
+  Cable de red rígido, precinto a 40 mm del anillo .... 13 %  (el cobre se deforma)
+  Cable de red rígido, suelto >= 15 cm ................ 8 %   (elástico)
+  Multifilar 7x0,2 .................................... 2 %   (elástico)
+
+CAMBIOS RESPECTO DE LAS VERSIONES ANTERIORES
+  - Torre con anillo guía sobre el eje: los cables salen a 6 mm del eje.
+  - Canal de cables ensanchado a 6,8 mm (antes solo entraban 8 de 10 cables).
+  - Cubo del horn al ras de la viga (antes la viga quedaba en el aire al imprimir).
+  - Techo inclinado 50° en los tubos de LED (antes necesitaban soportes).
+  - Medidas del servo ajustadas al plano: agujeros de orejas 27,3 (antes 27,9), orejas 31,9,
+    tapa del servo 26,7, horn 19,6 mm (alojamiento alargado a 16,4 mm desde el eje).
+  - Horn en su posición real: cubo hacia el servo y paleta arriba. El brazo apoya sobre la
+    cara superior del horn (hueco de 1,25 mm con su forma), queda 3 mm sobre la tapa del servo
+    y la cabeza del tornillo de 2 x 6 mm va avellanada (entra 3,4 mm en el eje).
+  - Salida del cable del servo: ranura abierta por arriba (7,3 mm, lado opuesto a la torre)
+    en lugar de un túnel cerrado, para colocar el cable ya soldado a la placa.

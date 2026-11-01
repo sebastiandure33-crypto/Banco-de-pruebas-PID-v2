@@ -1,0 +1,21 @@
+CÓMO MODIFICAR Y REGENERAR LAS PIEZAS
+=====================================
+
+1. Instalar Python 3 y las librerías:
+       pip install manifold3d trimesh numpy rtree
+
+2. Cambiar los parámetros al inicio de seguidor.py. Los más útiles:
+       HORN_CLR     holgura del horn por lado (0,10). 0,05 si el brazo quedó flojo, 0,20 si no entró.
+       SV_HOLE_SP   distancia entre agujeros de las orejas del servo (medir con calibre).
+       SV_HORN_SEAT altura a la que asienta el horn, desde el fondo del servo.
+       LDR_SP       distancia entre los 2 LDR (igualar al ancho de la línea).
+       FLOOR_GAP    altura de la boca de las cabinas sobre el piso (7 mm).
+       CABLE_D, GROOVE_W, GROOVE_D   diámetro de cable y medidas del canal.
+       TOWER_FREE   tramo libre de cable entre el brazo y el anillo (65 mm).
+
+3. Ejecutar indicando los largos de brazo (mm):
+       python3 seguidor.py 120
+   Sin argumentos genera L = 100, 120 y 150.
+   Los STL se guardan en 1_DISENO_3D/variantes/ y en pantalla aparece la verificación:
+   todos los valores de choque deben dar 0. Para imprimir, copiar brazo_L120.stl y
+   base_apoyo_libre_L120.stl a 1_DISENO_3D/impresion/ como 01_brazo_L120.stl y 02_base_L120.stl.

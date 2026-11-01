@@ -1,0 +1,52 @@
+PEDIDO DE IMPRESIÓN 3D - Soporte de seguidor de línea con servo SG90
+(versión texto del PDF INSTRUCCIONES_DE_IMPRESION.pdf - unidades en mm)
+
+RESUMEN
+  PLA NEGRO opaco - boquilla 0,4 - capa 0,16 - SIN SOPORTES - escala 100 %
+  Orientación: la que trae cada STL (ya está orientado para imprimir). No rotar.
+  Filamento total: ~32 g como máximo (las 2 piezas al 100 %).
+
+1. PIEZAS (1 de cada una, 2 en total)
+  01_brazo_L120.stl          143,3 x 29,0 x 31,0   ~11,1 g   relleno 100 % (o >= 60 % giroide)
+  02_base_L120.stl            63,6 x 53,6 x 108,9  ~20,2 g   relleno 40 % giroide
+  El brazo necesita una cama de al menos 150 mm (o ubicarlo en diagonal).
+
+2. PARÁMETROS
+  Material ............ PLA negro opaco (mate preferido). Alternativa: PETG negro.
+                        No usar colores claros ni translúcidos (aloja sensores de luz).
+  Boquilla ............ 0,4 mm
+  Altura de capa ...... 0,16 mm (0,12 - 0,20). Primera capa 0,20 mm.
+  Paredes ............. 3 (>= 1,2 mm)
+  Capas sup./inf. ..... 5 / 4
+  Soportes ............ NO. Solo hay techos cortos de canales internos (puentes de 4 - 7 mm).
+  Adherencia .......... Brim 4 mm en brazo y base.
+  Pata de elefante .... Compensar ~0,15 mm (el brazo apoya en la cama la cara con el canal).
+  Compensación XY ..... 0 (no agrandar ni achicar agujeros).
+  Ventilador .......... 100 % desde la capa 3.
+  Torre de la base .... Tiempo mínimo por capa >= 8 s o velocidad reducida arriba (109 mm de alto).
+
+3. ORIENTACIÓN (ya aplicada)
+  01 Brazo: boca abajo, la cara plana superior apoya entera en la cama.
+  02 Base:  placa sobre la cama, torre hacia arriba (tramo inclinado a 45°, sin soporte).
+
+4. MEDIDAS CRÍTICAS (± 0,15 mm)
+  Brazo: cubo del horn Ø7,4 - paleta 7,4->4,0 x 16,4 - cabinas LDR Ø5,5 (ventana Ø3,6)
+         tubos LED Ø5,2 (asiento Ø6,3) - canal de cables 6,8 x 2,4 - tornillo central Ø2,4 con avellanado Ø4,4 (2 x 6 mm)
+  Base:  bolsillo del servo 22,9 x 12,5 - guías M2 Ø1,7 - fijación M3 Ø3,4
+         anillo de cables Ø6,5 con ranura 1,4 - ranuras de precinto 1,6 x 3,2
+         ranura del cable del servo abierta por arriba, 7,3 de ancho
+
+5. PRECISIÓN
+  La medida más importante es el hueco del horn en la cara de abajo del brazo (Ø7,4 y la paleta):
+  de ella depende que el brazo quede sin juego. Calibración normal, sin escalar ni compensar
+  agujeros, y no lijar ese hueco.
+
+6. TERMINACIÓN
+  Retirar el brim. No lijar ni agrandar alojamientos, cabinas ni tubos.
+  Limpiar hilos dentro de las cabinas, tubos de LED y canal. Ranura del anillo abierta (1,4 mm).
+
+7. CONTROL ANTES DE ENTREGAR
+  [ ] Una varilla de 5 mm entra libre en las dos cabinas del LDR hasta el tope.
+  [ ] La cara superior del brazo salió plana.
+  [ ] La torre está recta y el anillo, completo.
+  [ ] Las 2 piezas en negro opaco, sin capas separadas.

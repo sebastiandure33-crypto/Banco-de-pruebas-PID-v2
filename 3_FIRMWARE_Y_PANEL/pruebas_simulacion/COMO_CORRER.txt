@@ -1,0 +1,10 @@
+Simulación del firmware en la PC (no se carga en la placa).
+Compila el mismo seguidor_v2.ino contra un Arduino simulado y un modelo físico
+(servo, brazo, LDR, línea en movimiento) y corre 16 chequeos.
+
+  g++ -std=c++17 -O2 -Imock sim.cpp -o sim
+  ./sim                      sistema a velocidad normal
+  LAG=2 ./sim                sistema 2 veces más lento (LDR y servo)
+  DEMO=1 ./sim               genera demo.txt (la grabación que usa el botón Demo del panel)
+
+(sim.cpp incluye ../seguidor_v2/seguidor_v2.ino: mantener la estructura de carpetas.)
