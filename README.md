@@ -87,7 +87,7 @@ python3 ../panel/construir_panel.py                     # vuelve a armar panel_v
 
 | Cant. | Pieza |
 |---|---|
-| 2 | Servos SG90 con su horn de **un** brazo (brazo y perturbador) |
+| 2 | Servos SG90. Brazo: horn de **un** brazo. Perturbador: cualquiera de los tres horn (un brazo, recto o cruz) |
 | 2 | Tornillos autorroscantes de 2 × 6 mm (horn del brazo y horn del piñón) |
 | 4 | Tornillos M2 autorroscantes (vienen con los servos) para las orejas |
 | 9 | Tornillos M3 × 8 autorroscantes: 5 fijan el soporte al pedestal y 4 fijan el soporte del perturbador |
@@ -105,7 +105,7 @@ python3 ../panel/construir_panel.py                     # vuelve a armar panel_v
 3. **Pedestal y pista**: la cola de milano del pedestal entra desde arriba en la pista. El soporte encastra en el pedestal y se fija con 5 M3.
 4. **Sector**: pegar la cinta negra en el canal radial. Poner el sector en el canal de la pista; tiene que girar a mano sin trabarse.
 5. **Perturbador**:
-   1. Con el servo en 90°, poner el horn de un brazo y el piñón encima, con el tornillo de 2 × 6 desde abajo.
+   1. Con el servo en 90°, poner el horn (de un brazo, recto o en cruz: el piñón acepta los tres, [imagen](1_DISENO_3D/imagenes/15_pinon_horns.png)) y el piñón encima, con el tornillo de 2 × 6 desde abajo. Con el horn en cruz conviene una gota de cianoacrilato entre horn y piñón.
    2. Poner el servo boca abajo en su soporte (orejas con M2).
    3. Bajar el soporte sobre la pista engranando el piñón con el sector, y atornillarlo con 4 M3 por las ranuras. Corriéndolo 3 mm se desengrana.
 6. **Cables**: los del brazo como antes. Los dos servos van a la salida de la alimentación, con las señales en D9 (brazo) y D10 (línea). Ver la [hoja 5](2_PLANOS/hoja5_esquema.png).

@@ -65,6 +65,8 @@ PLATAFORMA DE LA LÍNEA Y SERVO PERTURBADOR (plataforma.py, salida en salida_pla
     32 dientes: relación 7,375:1 -> 1° de servo = 0,136° de línea; recorrido ±12,2° de línea.
     Juego entre dientes 0,15 mm (0,06° de línea).
   - Servo perturbador boca abajo sobre un puente; ranuras de 3 mm para desengranar.
+  - El piñón acepta los tres horn del SG90 (un brazo, recto y cruz); pared mínima de 1,9 mm
+    entre el alojamiento y el fondo de los dientes.
   - Verificado sin choques: base/pedestal, pedestal/pista, servo y horn del perturbador, sector
     girando ±12,5° contra pista/pedestal/soporte, sector y piñón engranando en todo el recorrido,
     brazo a ±30° contra toda la plataforma. Las 5 piezas son sólidos cerrados.

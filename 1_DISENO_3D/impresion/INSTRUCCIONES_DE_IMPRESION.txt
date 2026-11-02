@@ -44,8 +44,8 @@ RESUMEN
          anillo de cables Ø6,5 con ranura 1,4 - ranuras de precinto 1,6 x 3,2
          ranura del cable del servo abierta por arriba, 7,3 de ancho
   Plataforma: encastre de la base en el pedestal (huella + 0,3) - cola de milano 14->20 (holgura 0,15)
-         canal del sector R94,7-R149,6 - dientes módulo 1,25 (no lijar) - piñón: hueco del horn
-         igual que el brazo - soporte: alojamiento del servo 22,9 x 12,5, ranuras M3
+         canal del sector R94,7-R149,6 - dientes módulo 1,25 (no lijar) - piñón: hueco para horn de un brazo, recto
+         o en cruz - soporte: alojamiento del servo 22,9 x 12,5, ranuras M3
 
 5. PRECISIÓN
   La medida más importante es el hueco del horn en la cara de abajo del brazo (Ø7,4 y la paleta):

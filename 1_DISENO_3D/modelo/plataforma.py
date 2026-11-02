@@ -217,10 +217,26 @@ def make_sector():
     return sec - cuts
 
 
+CRUZ_L = 11.5                # horn en cruz: del eje a la punta del brazo corto (alojamiento)
+CRUZ_W = 5.4                 # ancho del alojamiento de los brazos cortos de la cruz
+
+
+def horn_cuts_universal(za):
+    """Alojamiento que acepta los tres horn del SG90: de un brazo, de dos brazos (recto) y en cruz.
+    Eje X: paleta larga hacia los dos lados (como el brazo). Eje Y: brazos cortos de la cruz."""
+    c = s.HORN_CLR
+    cut = s.horn_cuts(za)                                           # cubo, paleta +X, tornillo, avellanado
+    zz = (za - 1, za + s.POCKET_D)
+    cut += Manifold.hull(Manifold.compose([cyl(s.HORN_PAD_W0 / 2 + c, *zz),
+          cyl(s.HORN_PAD_W1 / 2 + c, *zz, x=-(s.HORN_PAD_L - s.HORN_PAD_W1 / 2))]))   # paleta -X
+    cut += cube(-CRUZ_W / 2, CRUZ_W / 2, -CRUZ_L, CRUZ_L, *zz)                         # brazos cortos ±Y
+    return cut
+
+
 def make_pinion():
-    """Piñón en su posición: hueco del horn en la cara de arriba, avellanado abajo."""
+    """Piñón en su posición: alojamiento del horn (cualquiera de los 3) arriba, avellanado abajo."""
     g = gear_full(Z_PIN, 0, PIN_T, phase=180.0 / Z_PIN)
-    g -= s.horn_cuts(0.0)                      # hueco abajo, avellanado arriba (como el brazo)
+    g -= horn_cuts_universal(0.0)              # hueco abajo, avellanado arriba (como el brazo)
     g = g.rotate((180, 0, 0)).translate((0, 0, PIN_T))   # hueco arriba (hacia el servo)
     return g.translate((X_PIN, 0, PIN_Z0))
 
